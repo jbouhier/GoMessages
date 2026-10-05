@@ -1,9 +1,10 @@
 # GoMessages
 
-![](./site/public/product/desktop.png)
-
 Google Messages for Mac, Linux, and Windows.  
 Native and fast. 
+
+![](./site/public/product/desktop.png)
+
 
 ## Install
 
