@@ -1,6 +1,6 @@
 [package]
 name = "gomessages"
-version = "0.2.0"
+version = "0.3.0"
 edition = "2021"
 description = "GoMessages — native Google Messages desktop client"
 license = "MIT"
