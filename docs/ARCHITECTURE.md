@@ -28,13 +28,14 @@ no protocol reverse-engineering (breaks on every Google change).
 | Window + event loop | `winit` 0.30 | native window, transparent titlebar (macOS) |
 | Web engine | `wry` 0.57 (`WKWebView` on mac) | the Messages page, persistent `WebContext` profile |
 | Menu bar | `muda` 0.21 | GoMessages / Edit / View / Window menus; `Cmd+,` and zoom `Cmd+=/-/0` accelerators |
-| Zoom | Rust + init-script JS | level in `settings.json`, baked into the init script, re-pushed on page load |
+| Zoom | `wry` page zoom | per-monitor level in `settings.json`, re-applied on page load |
+| Sound | `NSSound` / OS alert API | optional system sound when unread count rises; preview in Settings |
 | Tray / menu bar icon | `tray-icon` 0.26 | Open / Settings / Quit, unread dot; opt-in on Linux (AppIndicator) |
 | Platform glue | `objc2` (macOS), `gtk` (Linux) | Dock icon on/off, Dock badge, Dock-click reopen; GTK init + pump |
 | Settings window | second `wry` view | local HTML + `window.ipc.postMessage` bridge |
 
 No JavaScript framework, no bundler in the app. The only frontend code is
-two small scripts: the init script (zoom, keybinds, splash, unread poller) and the
+two small scripts: the init script (keybinds, splash, unread poller) and the
 settings page.
 
 ## Data on disk
@@ -42,7 +43,7 @@ settings page.
 All under the app data dir (`~/Library/Application Support/dev.go-messages.go-messages/`
 on macOS):
 
-- `settings.json`, zoom, window geometry, background/tray/Dock choices.
+- `settings.json`, per-monitor zoom and window geometry, background/tray/Dock choices.
   Migrated once from older `zoom.json` / `window.json`.
 - `webview-profile/`, cookies, login, pairing.
 - `UNPAIR_ON_NEXT_LAUNCH`, flag file; next start wipes the profile, then
@@ -57,4 +58,3 @@ local JSON store with send-outbox, and a real Google OAuth desktop flow
 (PKCE loopback). It proves the native-UI direction but carries no traffic. Sync needs the undiscovered Messages scope and endpoints.
 
 Next: [CODEBASE](CODEBASE.md) for setup, build, and the file map.
-

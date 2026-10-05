@@ -1811,6 +1811,7 @@ dependencies = [
  "anyhow",
  "base64",
  "chrono",
+ "core-foundation",
  "directories",
  "eframe",
  "egui",

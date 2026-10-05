@@ -26,8 +26,8 @@ pub const WINDOW_HEIGHT: f64 = 800.0;
 pub const WINDOW_MIN_WIDTH: f64 = 900.0;
 pub const WINDOW_MIN_HEIGHT: f64 = 560.0;
 /// Settings window geometry (logical px, fixed size).
-pub const SETTINGS_WIDTH: f64 = 380.0;
-pub const SETTINGS_HEIGHT: f64 = 420.0;
+pub const SETTINGS_WIDTH: f64 = 470.0;
+pub const SETTINGS_HEIGHT: f64 = 650.0;
 /// Strip above the page for traffic lights (macOS transparent titlebar).
 #[cfg(target_os = "macos")]
 pub const TOP_INSET: f64 = 28.0;

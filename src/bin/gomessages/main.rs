@@ -10,6 +10,7 @@
 //! [`prefs`] `settings.json`, [`tray`] the tray icon, [`platform`] per-OS glue.
 
 mod app;
+mod display;
 mod menu;
 mod platform;
 mod prefs;
@@ -31,8 +32,11 @@ enum UserEvent {
     Ipc(String),
     /// Main page finished loading: re-apply remembered zoom.
     PageLoaded,
-    /// Unread count from the page.
-    Unread(u32),
+    /// Unread count from the page; baseline readings never play a sound.
+    Unread {
+        count: u32,
+        baseline: bool,
+    },
     /// macOS Dock click / relaunch while running.
     #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     Reopen,
@@ -94,14 +98,20 @@ impl ApplicationHandler<UserEvent> for Bootstrap {
         self.app = Some(state);
     }
 
-    /// Linux: winit doesn't run GTK's loop, so pump it ourselves at ~60 Hz.
+    /// Check display changes and save settled geometry. Linux also needs GTK
+    /// pumped at ~60 Hz because winit doesn't run its loop.
     fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        let now = std::time::Instant::now();
+        let mut deadline = self
+            .app
+            .as_mut()
+            .map(|app| app.tick(now))
+            .unwrap_or(now + std::time::Duration::from_secs(1));
         if cfg!(target_os = "linux") {
             platform::pump_toolkit();
-            event_loop.set_control_flow(ControlFlow::WaitUntil(
-                std::time::Instant::now() + std::time::Duration::from_millis(16),
-            ));
+            deadline = deadline.min(now + std::time::Duration::from_millis(16));
         }
+        event_loop.set_control_flow(ControlFlow::WaitUntil(deadline));
     }
 
     fn user_event(&mut self, event_loop: &ActiveEventLoop, event: UserEvent) {
@@ -142,5 +152,8 @@ fn main() {
     // Exit-time platform errors (e.g. late X11/GL errors) shouldn't panic.
     if let Err(e) = event_loop.run_app(&mut boot) {
         eprintln!("GoMessages: event loop ended with an error: {e}");
+    }
+    if let Some(app) = &mut boot.app {
+        app.save_on_exit();
     }
 }

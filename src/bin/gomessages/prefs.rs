@@ -3,6 +3,7 @@
 //! Every field has a default, so adding a setting is one field. Older
 //! `zoom.json` / `window.json` files are migrated once, then removed.
 
+use std::collections::HashMap;
 use std::path::Path;
 
 use serde::{Deserialize, Serialize};
@@ -12,6 +13,15 @@ use super::webview::{DEFAULT_IDX, PRESETS};
 const FILE: &str = "settings.json";
 const LEGACY_ZOOM: &str = "zoom.json";
 const LEGACY_WINDOW: &str = "window.json";
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
+#[serde(rename_all = "snake_case")]
+pub enum NotificationSound {
+    #[default]
+    #[serde(alias = "google_messages", alias = "soft_bell", alias = "system_alert")]
+    SystemNotification,
+    Off,
+}
 
 /// Main window size + position, physical px.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -28,12 +38,46 @@ impl Geometry {
     }
 }
 
+/// Window rectangle in logical pixels, relative to its monitor.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub struct MonitorGeometry {
+    pub x: i32,
+    pub y: i32,
+    pub w: u32,
+    pub h: u32,
+}
+
+impl MonitorGeometry {
+    fn valid(&self) -> bool {
+        self.w >= 400 && self.h >= 300
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
+pub struct DisplayProfile {
+    pub zoom_idx: usize,
+    pub window: Option<MonitorGeometry>,
+}
+
+impl Default for DisplayProfile {
+    fn default() -> Self {
+        Self {
+            zoom_idx: DEFAULT_IDX,
+            window: None,
+        }
+    }
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Prefs {
-    /// Index into [`PRESETS`].
+    /// Last active zoom and geometry, retained for older settings files.
     pub zoom_idx: usize,
+    pub notification_sound: NotificationSound,
     pub window: Option<Geometry>,
+    pub displays: HashMap<String, DisplayProfile>,
+    pub last_monitor: Option<String>,
     /// Closing the main window hides it instead of quitting.
     pub keep_running: bool,
     /// Menu bar icon (macOS) / tray icon (Windows, Linux).
@@ -46,7 +90,10 @@ impl Default for Prefs {
     fn default() -> Self {
         Self {
             zoom_idx: DEFAULT_IDX,
+            notification_sound: NotificationSound::default(),
             window: None,
+            displays: HashMap::new(),
+            last_monitor: None,
             keep_running: true,
             // Windows: the tray is the only way back to a hidden window.
             tray: cfg!(target_os = "windows"),
@@ -111,6 +158,12 @@ impl Prefs {
             self.zoom_idx = DEFAULT_IDX;
         }
         self.window = self.window.filter(Geometry::valid);
+        for profile in self.displays.values_mut() {
+            if profile.zoom_idx >= PRESETS.len() {
+                profile.zoom_idx = DEFAULT_IDX;
+            }
+            profile.window = profile.window.filter(MonitorGeometry::valid);
+        }
         if !cfg!(target_os = "macos") || !self.tray {
             self.hide_dock = false;
         }
@@ -145,8 +198,22 @@ mod tests {
     #[test]
     fn round_trip() {
         let d = tmp_dir("rt");
+        let mut displays = HashMap::new();
+        displays.insert(
+            "mac:123".into(),
+            DisplayProfile {
+                zoom_idx: 8,
+                window: Some(MonitorGeometry {
+                    x: 120,
+                    y: 80,
+                    w: 1000,
+                    h: 650,
+                }),
+            },
+        );
         let p = Prefs {
             zoom_idx: 10,
+            notification_sound: NotificationSound::Off,
             window: Some(Geometry {
                 x: 5,
                 y: 6,
@@ -156,6 +223,8 @@ mod tests {
             keep_running: false,
             tray: true,
             hide_dock: cfg!(target_os = "macos"),
+            displays,
+            last_monitor: Some("mac:123".into()),
         };
         p.save_to(&d);
         assert_eq!(Prefs::load_from(&d), p);
@@ -167,7 +236,24 @@ mod tests {
         std::fs::write(d.join(FILE), br#"{"zoom_idx":9}"#).unwrap();
         let p = Prefs::load_from(&d);
         assert_eq!(p.zoom_idx, 9);
+        assert_eq!(p.notification_sound, NotificationSound::SystemNotification);
         assert!(p.keep_running);
+    }
+
+    #[test]
+    fn old_sound_choices_migrate_to_system_notification() {
+        assert_eq!(
+            serde_json::to_string(&NotificationSound::Off).unwrap(),
+            "\"off\""
+        );
+        let d = tmp_dir("sound-migration");
+        for old in ["google_messages", "soft_bell", "system_alert"] {
+            std::fs::write(d.join(FILE), format!(r#"{{"notification_sound":"{old}"}}"#)).unwrap();
+            assert_eq!(
+                Prefs::load_from(&d).notification_sound,
+                NotificationSound::SystemNotification
+            );
+        }
     }
 
     #[test]
@@ -183,6 +269,14 @@ mod tests {
         let p = Prefs::load_from(&d);
         assert_eq!(p.zoom_idx, DEFAULT_IDX);
         assert_eq!(p.window, None);
+        std::fs::write(
+            d.join(FILE),
+            br#"{"displays":{"screen":{"zoom_idx":99,"window":{"x":0,"y":0,"w":10,"h":10}}}}"#,
+        )
+        .unwrap();
+        let p = Prefs::load_from(&d);
+        assert_eq!(p.displays["screen"].zoom_idx, DEFAULT_IDX);
+        assert_eq!(p.displays["screen"].window, None);
     }
 
     #[test]

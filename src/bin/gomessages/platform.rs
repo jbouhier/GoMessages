@@ -10,12 +10,13 @@ pub type Proxy = winit::event_loop::EventLoopProxy<UserEvent>;
 
 #[cfg(target_os = "macos")]
 mod imp {
+    use std::cell::RefCell;
     use std::sync::{Mutex, OnceLock};
 
     use objc2::rc::Retained;
     use objc2::runtime::{AnyClass, AnyObject, Bool, Imp, Sel};
-    use objc2::{sel, MainThreadMarker};
-    use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy};
+    use objc2::{sel, AnyThread, MainThreadMarker};
+    use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy, NSSound};
     use objc2_foundation::NSString;
 
     use super::{Proxy, UserEvent};
@@ -50,6 +51,39 @@ mod imp {
         let Some(app) = app() else { return };
         let label = (unread > 0).then(|| NSString::from_str(&unread.to_string()));
         app.dockTile().setBadgeLabel(label.as_deref());
+    }
+
+    const NOTIFICATION_SOUND: &str = "/System/Library/PrivateFrameworks/ToneLibrary.framework/Versions/A/Resources/AlertTones/EncoreInfinitum/Rebound-EncoreInfinitum.caf";
+    const MESSAGE_SOUND: &str = "/System/Library/PrivateFrameworks/ToneLibrary.framework/Versions/A/Resources/AlertTones/ReceivedMessage.caf";
+
+    thread_local! {
+        static SYSTEM_SOUND: RefCell<Option<Retained<NSSound>>> = const { RefCell::new(None) };
+    }
+
+    fn installed_notification_sound() -> Option<Retained<NSSound>> {
+        for path in [NOTIFICATION_SOUND, MESSAGE_SOUND] {
+            let path = NSString::from_str(path);
+            if let Some(sound) =
+                NSSound::initWithContentsOfFile_byReference(NSSound::alloc(), &path, true)
+            {
+                return Some(sound);
+            }
+        }
+        NSSound::soundNamed(&NSString::from_str("Glass"))
+    }
+
+    /// Keep the NSSound alive while its asynchronous playback finishes.
+    pub fn play_system_notification() {
+        SYSTEM_SOUND.with(|slot| {
+            let mut slot = slot.borrow_mut();
+            if slot.is_none() {
+                *slot = installed_notification_sound();
+            }
+            if let Some(sound) = slot.as_ref() {
+                let _ = sound.stop();
+                let _ = sound.play();
+            }
+        });
     }
 
     static REOPEN: OnceLock<Mutex<Proxy>> = OnceLock::new();
@@ -111,6 +145,21 @@ mod imp {
 }
 
 pub use imp::*;
+
+#[cfg(target_os = "linux")]
+pub fn play_system_notification() {
+    gtk::gdk::beep();
+}
+
+#[cfg(target_os = "windows")]
+pub fn play_system_notification() {
+    #[link(name = "user32")]
+    unsafe extern "system" {
+        fn MessageBeep(kind: u32) -> i32;
+    }
+    // 0 uses the user's default system sound.
+    unsafe { MessageBeep(0) };
+}
 
 /// Linux: tray-icon panics (and later aborts) when no AppIndicator library
 /// is installed, so check with the same names it tries before using it.

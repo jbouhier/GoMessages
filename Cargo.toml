@@ -31,11 +31,14 @@ chrono = { version = "0.4", optional = true }
 
 # macOS: Dock icon policy, Dock badge, Dock-click reopen (see platform.rs).
 [target.'cfg(target_os = "macos")'.dependencies]
+core-foundation = "0.9.4"
 objc2 = "0.6"
 objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString"] }
 objc2-app-kit = { version = "0.3", default-features = false, features = [
   "std",
   "NSApplication",
+  "NSGraphics",
+  "NSSound",
   "NSDockTile",
   "NSResponder",
   "NSRunningApplication",
@@ -58,4 +61,3 @@ native = [
   "dep:ureq",
   "dep:chrono",
 ]
-
