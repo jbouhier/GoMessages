@@ -11,7 +11,7 @@ use super::platform;
 use super::prefs::{Geometry, Prefs};
 use super::settings::{prefs_state_json, settings_html, zoom_state_args};
 use super::tray::Tray;
-use super::webview::{fullscreen_bounds, init_js, navigation_allowed, webview_bounds};
+use super::webview::{fullscreen_bounds, navigation_allowed, webview_bounds, INIT_JS, PRESETS};
 use super::UserEvent;
 use gomessages::config;
 use winit::event::WindowEvent;
@@ -188,10 +188,10 @@ impl GoMessages {
         self.sync_settings_zoom();
     }
 
-    /// Re-apply the remembered level to the page (startup, reload, navigation).
+    /// Apply browser zoom so fixed overlays and page menus share viewport coordinates.
     fn push_zoom_to_page(&self) {
         if let Some(v) = &self.main_view {
-            let _ = v.evaluate_script(&super::webview::zoom_apply_js(self.prefs.zoom_idx));
+            let _ = v.zoom(PRESETS[self.prefs.zoom_idx] / 100.0);
         }
     }
 
@@ -286,12 +286,6 @@ impl GoMessages {
         match event {
             UserEvent::Ipc(msg) => self.handle_ipc(event_loop, &msg),
             UserEvent::PageLoaded => self.push_zoom_to_page(),
-            UserEvent::ZoomSync(pct) => {
-                // Page zoomed itself (shortcuts, pinch): mirror, don't re-apply.
-                self.prefs.zoom_idx = super::webview::nearest_idx(pct);
-                self.prefs.save();
-                self.sync_settings_zoom();
-            }
             UserEvent::Unread(n) => self.set_unread(n),
             UserEvent::Reopen => self.show_main(),
             UserEvent::TrayClick => self.toggle_main(),
@@ -407,8 +401,8 @@ pub fn build_main_window(
     let view = wry::WebViewBuilder::new_with_web_context(&mut context)
         .with_url(config::APP_URL)
         .with_bounds(webview_bounds(&window))
-        .with_initialization_script(init_js(app.prefs.zoom_idx))
-        // Off: WebView2 native zoom would stack on our CSS zoom (no-op elsewhere).
+        .with_initialization_script(INIT_JS)
+        // Zoom shortcuts go through app state so presets and settings stay synced.
         .with_hotkeys_zoom(false)
         .with_navigation_handler(|url| {
             if navigation_allowed(&url) {
@@ -431,16 +425,16 @@ pub fn build_main_window(
                 let body = req.body();
                 if let Some(n) = parse_unread(body) {
                     let _ = proxy.send_event(UserEvent::Unread(n));
-                } else if body == "open-settings" {
+                } else if matches!(
+                    body.as_str(),
+                    "open-settings" | "zoom-in" | "zoom-out" | "zoom-reset"
+                ) {
                     let _ = proxy.send_event(UserEvent::Ipc(body.clone()));
-                } else if let Some(pct) = body.strip_prefix("zoom:") {
-                    if let Ok(v) = pct.trim_end_matches('%').parse::<f64>() {
-                        let _ = proxy.send_event(UserEvent::ZoomSync(v));
-                    }
                 }
             }
         })
         .build_as_child(&window)?;
+    view.zoom(PRESETS[app.prefs.zoom_idx] / 100.0)?;
     // `context` must outlive the webview on some platforms; wry holds it.
     std::mem::forget(context);
     app.track_main(window, view);

@@ -1,7 +1,7 @@
 //! GoMessages: native window with embedded real Messages page (`wry`).
 //!
 //! The page owns contacts, search, and auth. This binary is a thin native
-//! frame: traffic-lights window, persistent profile, in-page zoom, app menu
+//! frame: traffic-lights window, persistent profile, webview zoom, app menu
 //! with Settings (`Cmd+,`), a local settings window, background mode with a
 //! menu bar / tray icon, and an unread badge.
 //!
@@ -29,7 +29,6 @@ use winit::window::WindowId;
 enum UserEvent {
     Menu(MenuId),
     Ipc(String),
-    ZoomSync(f64),
     /// Main page finished loading: re-apply remembered zoom.
     PageLoaded,
     /// Unread count from the page.
