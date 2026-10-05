@@ -6,6 +6,9 @@ use crate::config;
 
 /// Resolve the data dir, creating nothing. Callers create what they need.
 pub fn data_dir() -> Option<PathBuf> {
+    if std::env::var_os("GOMESSAGES_MARKETING_DEMO").as_deref() == Some(std::ffi::OsStr::new("1")) {
+        return std::env::var_os("GOMESSAGES_MARKETING_DATA_DIR").map(PathBuf::from);
+    }
     directories::ProjectDirs::from(config::DATA_QUALIFIER, config::DATA_ORG, config::DATA_APP)
         .map(|p| p.data_dir().to_path_buf())
 }

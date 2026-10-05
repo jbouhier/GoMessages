@@ -703,6 +703,7 @@ pub fn build_main_window(
     event_loop: &ActiveEventLoop,
     app: &mut GoMessages,
     proxy: &winit::event_loop::EventLoopProxy<UserEvent>,
+    marketing_demo: bool,
 ) -> anyhow::Result<()> {
     use winit::window::Window;
     let attrs = Window::default_attributes().with_title(config::APP_NAME);
@@ -729,9 +730,14 @@ pub fn build_main_window(
     };
     let window = event_loop.create_window(attrs)?;
     let mut context = wry::WebContext::new(profile_dir());
-    let view = wry::WebViewBuilder::new_with_web_context(&mut context)
-        .with_url(config::APP_URL)
-        .with_bounds(webview_bounds(&window))
+    let builder = wry::WebViewBuilder::new_with_web_context(&mut context)
+        .with_bounds(webview_bounds(&window));
+    let builder = if marketing_demo {
+        builder.with_html(include_str!("../../../assets/marketing/demo.html"))
+    } else {
+        builder.with_url(config::APP_URL)
+    };
+    let view = builder
         .with_initialization_script(INIT_JS)
         // Zoom shortcuts go through app state so presets and settings stay synced.
         .with_hotkeys_zoom(false)

@@ -61,6 +61,8 @@ struct Bootstrap {
     app: Option<GoMessages>,
     prefs: Option<prefs::Prefs>,
     proxy: winit::event_loop::EventLoopProxy<UserEvent>,
+    marketing_demo: bool,
+    marketing_settings: bool,
 }
 
 impl ApplicationHandler<UserEvent> for Bootstrap {
@@ -90,9 +92,13 @@ impl ApplicationHandler<UserEvent> for Bootstrap {
         app::wire_tray_events(&self.proxy);
         let prefs = self.prefs.take().unwrap_or_default();
         let mut state = GoMessages::new(self.proxy.clone(), menu, ids, prefs);
-        if app::build_main_window(event_loop, &mut state, &self.proxy).is_err() {
+        if app::build_main_window(event_loop, &mut state, &self.proxy, self.marketing_demo).is_err()
+        {
             event_loop.exit();
             return;
+        }
+        if self.marketing_settings {
+            state.open_settings(event_loop);
         }
         state.start_background();
         self.app = Some(state);
@@ -126,6 +132,21 @@ impl ApplicationHandler<UserEvent> for Bootstrap {
 }
 
 fn main() {
+    let marketing_demo = std::env::args_os().any(|arg| arg == "--marketing-demo");
+    let marketing_settings = std::env::args_os().any(|arg| arg == "--marketing-settings");
+    if marketing_settings && !marketing_demo {
+        eprintln!("--marketing-settings requires --marketing-demo");
+        std::process::exit(2);
+    }
+    if marketing_demo {
+        let data_dir =
+            std::env::var_os("GOMESSAGES_MARKETING_DATA_DIR").map(std::path::PathBuf::from);
+        if !data_dir.as_ref().is_some_and(|path| path.is_absolute()) {
+            eprintln!("--marketing-demo requires an absolute GOMESSAGES_MARKETING_DATA_DIR");
+            std::process::exit(2);
+        }
+        std::env::set_var("GOMESSAGES_MARKETING_DEMO", "1");
+    }
     if !platform::init_toolkit() {
         eprintln!("GoMessages: could not initialize GTK (is a display available?)");
         std::process::exit(1);
@@ -148,6 +169,8 @@ fn main() {
         app: None,
         prefs: Some(prefs),
         proxy,
+        marketing_demo,
+        marketing_settings,
     };
     // Exit-time platform errors (e.g. late X11/GL errors) shouldn't panic.
     if let Err(e) = event_loop.run_app(&mut boot) {

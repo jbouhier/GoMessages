@@ -46,6 +46,7 @@ Docs site:
 just site-install  # one time
 just site-dev      # preview at localhost:4321
 just site-build    # static build
+just screenshot  # staged Mac app image for the site
 ```
 
 ## Read next
@@ -53,3 +54,4 @@ just site-build    # static build
 1. [ARCHITECTURE](ARCHITECTURE.md), why it is built this way.
 2. [CODEBASE](CODEBASE.md), file map and conventions.
 3. [CONTRIBUTING](CONTRIBUTING.md), how to land a change.
+4. [SCREENSHOT](SCREENSHOT.md), how to refresh the product image.

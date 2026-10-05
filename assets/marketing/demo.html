@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Messages demo</title>
+  <style>
+    :root { font-family: Arial, Helvetica, sans-serif; color: #1f1f1f; background: #fff; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; width: 100%; height: 100%; overflow: hidden; }
+    button { font: inherit; border: 0; background: none; color: inherit; }
+    .app { display: grid; grid-template-columns: 352px minmax(0, 1fr); height: 100%; }
+    aside { border-right: 1px solid #e2e5e9; background: #fff; min-width: 0; }
+    .sidebar-head { height: 72px; display: flex; align-items: center; justify-content: space-between; padding: 0 25px 0 28px; }
+    .brand { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 500; letter-spacing: -.7px; }
+    .brand svg { width: 30px; height: 30px; }
+    .icon { font-size: 23px; line-height: 1; color: #62676d; width: 34px; text-align: center; }
+    .search { margin: 3px 17px 16px; background: #f0f3f7; border-radius: 28px; height: 45px; display: flex; align-items: center; gap: 15px; padding: 0 17px; color: #687078; font-size: 14px; }
+    .search svg { width: 19px; height: 19px; stroke: currentColor; }
+    .new { height: 45px; display: flex; align-items: center; gap: 15px; margin: 0 17px 15px; padding: 0 18px; background: #dce9ff; border-radius: 25px; font-size: 14px; font-weight: 600; color: #19427d; width: calc(100% - 34px); }
+    .new span { font-size: 24px; line-height: 1; font-weight: 300; }
+    .section { margin: 21px 29px 8px; font-size: 12px; color: #687078; font-weight: 600; }
+    .thread { display: flex; align-items: center; height: 77px; padding: 0 18px; gap: 13px; }
+    .thread.selected { background: #e6efff; border-radius: 0 24px 24px 0; margin-right: 13px; padding-right: 5px; }
+    .avatar { width: 45px; height: 45px; flex: none; border-radius: 50%; display: grid; place-items: center; color: #263542; font-weight: 600; font-size: 16px; }
+    .a1 { background: #bde9d7; }.a2 { background: #f9dfb0; }.a3 { background: #d6c7f7; }.a4 { background: #badbf6; }.a5 { background: #f5c7cb; }
+    .thread-text { min-width: 0; flex: 1; }
+    .thread-title { font-size: 14px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .thread-preview { margin-top: 6px; color: #677078; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .thread-time { color: #6e7680; align-self: flex-start; margin-top: 19px; font-size: 11px; }
+    .unread { background: #1769d2; color: white; width: 17px; height: 17px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; margin-left: auto; margin-top: 6px; }
+    main { display: grid; grid-template-rows: 70px minmax(0, 1fr) 79px; min-width: 0; background: #f9fafc; }
+    .chat-head { background: #fff; border-bottom: 1px solid #e2e5e9; display: flex; align-items: center; gap: 13px; padding: 0 28px; }
+    .chat-head .avatar { width: 39px; height: 39px; font-size: 14px; }
+    .chat-head strong { font-size: 15px; font-weight: 600; }
+    .chat-head small { display: block; margin-top: 3px; font-size: 11px; color: #747b83; }
+    .chat-actions { margin-left: auto; display: flex; gap: 25px; color: #677078; font-size: 20px; }
+    .messages { overflow: hidden; padding: 30px 46px 16px; display: flex; flex-direction: column; gap: 14px; }
+    .date { align-self: center; font-size: 11px; color: #767e87; margin: 0 0 6px; }
+    .bubble { max-width: 70%; padding: 12px 15px; border-radius: 18px; font-size: 14px; line-height: 1.42; box-shadow: 0 1px 1px #00000008; }
+    .incoming { align-self: flex-start; background: #e9edf2; border-bottom-left-radius: 5px; }
+    .outgoing { align-self: flex-end; background: #d6e5ff; border-bottom-right-radius: 5px; }
+    .meta { align-self: flex-end; color: #747b83; font-size: 10px; margin-top: -8px; }
+    .photo { align-self: flex-start; width: 265px; height: 125px; border-radius: 16px; overflow: hidden; background: linear-gradient(168deg, #93cae8 0 45%, #66925b 46% 62%, #416e49 63%); position: relative; }
+    .photo:before { content: ''; position: absolute; width: 220px; height: 95px; background: #f5dbb9; border-radius: 65% 65% 0 0; left: 86px; bottom: -61px; transform: rotate(-13deg); }
+    .photo:after { content: ''; position: absolute; width: 57px; height: 78px; background: #c86c45; border-radius: 50% 50% 0 0; left: 93px; bottom: -31px; transform: rotate(-13deg); }
+    .compose { display: flex; align-items: center; gap: 17px; padding: 11px 24px; background: #fff; border-top: 1px solid #e2e5e9; color: #66717b; }
+    .compose .plus { font-size: 27px; font-weight: 300; }
+    .input { flex: 1; height: 47px; border-radius: 24px; background: #f2f4f7; display: flex; align-items: center; padding: 0 20px; font-size: 14px; }
+    .compose .face { font-size: 23px; }
+    .send { width: 42px; height: 42px; border-radius: 50%; background: #dce9ff; color: #1d5bac; display: grid; place-items: center; font-size: 18px; }
+    @media (max-width: 1000px) { .app { grid-template-columns: 300px minmax(0,1fr); } .messages { padding-left: 28px; padding-right: 28px; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="sidebar-head"><div class="brand"><svg viewBox="0 0 36 36" aria-hidden="true"><path d="M4 6h28v19H15L7 31v-6H4z" fill="#8ab4f8"/><path d="M8 10h24v17H14l-6 4z" fill="#1a73e8"/></svg>Messages</div><span class="icon">⋮</span></div>
+      <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke-width="2"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>Search conversations</div>
+      <button class="new"><span>＋</span>Start chat</button>
+      <div class="section">Conversations</div>
+      <div class="thread selected"><div class="avatar a1">AL</div><div class="thread-text"><div class="thread-title">Alex Morgan</div><div class="thread-preview">Perfect. See you there!</div></div><div class="thread-time">10:42</div></div>
+      <div class="thread"><div class="avatar a2">ST</div><div class="thread-text"><div class="thread-title">Studio team</div><div class="thread-preview">Maya: The files are ready to review</div></div><div><div class="thread-time">09:18</div><div class="unread">2</div></div></div>
+      <div class="thread"><div class="avatar a3">JC</div><div class="thread-text"><div class="thread-title">Jordan Chen</div><div class="thread-preview">Thanks for the update!</div></div><div class="thread-time">Yesterday</div></div>
+      <div class="thread"><div class="avatar a4">NW</div><div class="thread-text"><div class="thread-title">Northwind team</div><div class="thread-preview">The meeting is confirmed for Friday</div></div><div class="thread-time">Yesterday</div></div>
+      <div class="thread"><div class="avatar a5">SR</div><div class="thread-text"><div class="thread-title">Sam Rivera</div><div class="thread-preview">That looks great to me</div></div><div class="thread-time">Mon</div></div>
+    </aside>
+    <main>
+      <div class="chat-head"><div class="avatar a1">AL</div><div><strong>Alex Morgan</strong><small>Mobile · RCS chat</small></div><div class="chat-actions"><span>⌕</span><span>⋮</span></div></div>
+      <div class="messages">
+        <div class="date">Today</div>
+        <div class="bubble incoming">Morning! Did you get a chance to look at the place?</div>
+        <div class="bubble outgoing">Yes, it looks great. The light in the main room is perfect.</div>
+        <div class="bubble incoming">I thought so too. Here’s the view from the terrace.</div>
+        <div class="photo" role="img" aria-label="Illustrative terrace view"></div>
+        <div class="bubble outgoing">That settles it. Coffee there on Saturday?</div>
+        <div class="bubble incoming">Perfect. See you there!</div>
+        <div class="meta">Read · 10:42</div>
+      </div>
+      <div class="compose"><span class="plus">＋</span><div class="input">Text message</div><span class="face">☺</span><span class="send">➤</span></div>
+    </main>
+  </div>
+</body>
+</html>

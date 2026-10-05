@@ -45,6 +45,11 @@ site-dev:
 site-build:
     cd site && bun run build
 
+# Capture a staged Mac app window for the site and other marketing use
+[unix]
+screenshot:
+    bash scripts/screenshot.sh
+
 # Remove build output
 [unix]
 clean:

@@ -6,6 +6,8 @@ description: The GoMessages settings window.
 Open with `Cmd+,` (Mac) or `Ctrl+,` (Windows, Linux), GoMessages → Settings…
 in the Mac menu bar, or Settings… in the tray icon menu.
 
+<img src="/GoMessages/product/settings.png" alt="GoMessages Settings window on Mac in dark mode" width="470" />
+
 - **Page zoom**, `A−` / `A+` / `Reset` act on the main window immediately and
   show the current level. The app remembers a separate zoom level for each monitor.
 - **Notification sound**, turn the system sound on or off. Play previews it
