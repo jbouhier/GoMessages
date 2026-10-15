@@ -58,6 +58,8 @@ button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid 
 <button id="zin" aria-label="Zoom in" title="Zoom in" onclick="send('zoom-in')">+</button>
 <button class="reset" id="zreset" aria-label="Reset zoom" title="Reset zoom" onclick="send('zoom-reset')">↺</button>
 </div></div>
+<div class="item" id="popuprow"><div class="copy"><label class="title" for="popup">Notification banner</label><span class="hint" id="popuphint"></span></div>
+<div class="sound-controls"><input class="switch" id="popup" type="checkbox" aria-label="Show notification banners" onchange="send('popup:'+(this.checked?'on':'off'))"><button class="preview" id="popuppreview" type="button" aria-label="Show a test banner" title="Show a test banner" onclick="send('popup-preview')"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.8v12.4c0 .6.7 1 1.2.7l9.4-6.2a.8.8 0 0 0 0-1.4L4.2 1.1C3.7.8 3 1.2 3 1.8Z"/></svg></button></div></div>
 <div class="item"><div class="copy"><label class="title" for="sound">Notification sound</label><span class="hint">__SOUND_HINT__</span></div>
 <div class="sound-controls"><input class="switch" id="sound" type="checkbox" aria-label="Play notification sounds" onchange="send('sound:'+(this.checked?'on':'off'))"><button class="preview" id="soundpreview" type="button" aria-label="Play notification sound" title="Play notification sound" onclick="send('sound-preview')"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M3 1.8v12.4c0 .6.7 1 1.2.7l9.4-6.2a.8.8 0 0 0 0-1.4L4.2 1.1C3.7.8 3 1.2 3 1.8Z"/></svg></button></div></div>
 </div></section>
@@ -97,6 +99,13 @@ document.getElementById('traylabel').textContent=mac?'Show menu bar icon':'Show 
 document.getElementById('trayhint').textContent=!p.tray_ok?'No tray available on this desktop.':(OS==='linux'?'Needs AppIndicator support (GNOME: AppIndicator extension).':'');
 document.getElementById('tray').checked=p.tray;
 document.getElementById('sound').checked=p.notification_sound!=='off';
+var bs=p.banner_status,popup=document.getElementById('popup');
+document.getElementById('popuprow').hidden=bs==='unsupported'&&!mac;
+popup.checked=p.notification_popup&&bs!=='unsupported';
+popup.disabled=bs==='unsupported';
+document.getElementById('popuppreview').disabled=!popup.checked||bs==='denied';
+document.getElementById('popuprow').classList.toggle('off',bs==='unsupported');
+document.getElementById('popuphint').textContent=bs==='unsupported'?'Needs the bundled GoMessages.app.':bs==='denied'&&p.notification_popup?'Blocked by macOS. Allow it in System Settings > Notifications > GoMessages.':'macOS banner for new messages while the window is in the background.';
 document.getElementById('keep').checked=p.keep_running&&(mac||p.tray);
 document.getElementById('keephint').textContent=mac?'Reopen from the Dock'+(p.tray?' or menu bar icon.':'.'):(p.tray?'Reopen from the tray icon.':'Needs the tray icon.');
 en('keep',mac||p.tray);
@@ -143,6 +152,8 @@ pub fn prefs_state_json(prefs: &Prefs, tray_ok: bool) -> String {
         "tray": prefs.tray,
         "hide_dock": prefs.hide_dock,
         "notification_sound": prefs.notification_sound,
+        "notification_popup": prefs.notification_popup,
+        "banner_status": super::platform::banner_status().as_str(),
         "tray_ok": tray_ok,
     })
     .to_string()
@@ -182,8 +193,55 @@ mod tests {
         assert!(html.contains("__setZoom(25,0,16,7);"));
         assert!(html.contains("\"keep_running\":true"));
         assert!(html.contains("onclick=\"send('sound-preview')\""));
+        assert!(html.contains("onclick=\"send('popup-preview')\""));
+        assert!(html.contains("\"notification_popup\":true"));
         assert!(!html.contains("Soft bell"));
         assert!(!html.contains("Preferences for this device"));
         assert!(!html.contains("<footer"));
+    }
+
+    #[test]
+    fn prefs_json_carries_alert_state() {
+        let prefs = Prefs {
+            notification_popup: false,
+            notification_sound: super::super::prefs::NotificationSound::Off,
+            ..Prefs::default()
+        };
+        let v: serde_json::Value = serde_json::from_str(&prefs_state_json(&prefs, true)).unwrap();
+        assert_eq!(v["notification_popup"], false);
+        assert_eq!(v["notification_sound"], "off");
+        let status = v["banner_status"].as_str().unwrap();
+        assert_eq!(status, super::super::platform::banner_status().as_str());
+        if !cfg!(target_os = "macos") {
+            assert_eq!(status, "unsupported");
+        }
+        let v: serde_json::Value =
+            serde_json::from_str(&prefs_state_json(&Prefs::default(), false)).unwrap();
+        assert_eq!(v["notification_popup"], true);
+        assert_eq!(v["notification_sound"], "system_notification");
+        assert_eq!(v["tray_ok"], false);
+    }
+
+    /// The settings script looks these up by id; a typo is a runtime crash.
+    #[test]
+    fn template_has_every_element_the_script_uses() {
+        let html = settings_html(&Prefs::default(), true);
+        let script = &html[html.find("<script>").unwrap()..];
+        let mut rest = script;
+        let mut ids = Vec::new();
+        while let Some(i) = rest.find("getElementById('") {
+            rest = &rest[i + "getElementById('".len()..];
+            let end = rest.find('\'').unwrap();
+            ids.push(&rest[..end]);
+        }
+        // en('keep', ..) and en('dock', ..) also touch `<id>row`.
+        ids.extend(["keeprow", "dockrow"]);
+        assert!(ids.contains(&"popup") && ids.contains(&"popuphint"));
+        for id in ids {
+            assert!(
+                html.contains(&format!("id=\"{id}\"")),
+                "missing element #{id}"
+            );
+        }
     }
 }

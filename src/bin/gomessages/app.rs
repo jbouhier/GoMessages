@@ -1,5 +1,6 @@
 //! App state: windows, webviews, menu + tray actions, settings IPC,
-//! background mode (hide on close), unread badge.
+//! background mode (hide on close), unread badge, new-message alerts
+//! (banner and sound, toggled separately).
 
 use std::collections::{HashMap, HashSet};
 use std::time::{Duration, Instant};
@@ -25,6 +26,12 @@ pub enum Role {
     Settings,
 }
 
+/// One sound per message even when both the page notification and the
+/// unread poller report it.
+const SOUND_DEDUPE: Duration = Duration::from_secs(4);
+const MAX_TITLE: usize = 120;
+const MAX_BODY: usize = 600;
+
 const MOVE_SETTLE: Duration = Duration::from_millis(650);
 const RESTORE_SETTLE: Duration = Duration::from_millis(350);
 
@@ -49,6 +56,10 @@ pub struct GoMessages {
     /// False when the tray was asked for but the desktop has none.
     tray_ok: bool,
     unread: u32,
+    last_sound: Option<Instant>,
+    /// Native banner ids issued so far; makes each request id unique.
+    banner_seq: u64,
+    main_focused: bool,
     active_display: Option<Display>,
     pending_display: Option<PendingDisplay>,
     using_fallback: bool,
@@ -80,6 +91,101 @@ pub fn parse_pref(msg: &str) -> Option<(&str, bool)> {
         "0" => Some((key, false)),
         _ => None,
     }
+}
+
+/// A web notification the page tried to show, from the init-script shim.
+#[derive(Debug, PartialEq, Eq, serde::Deserialize)]
+pub struct PageNotification {
+    pub id: String,
+    #[serde(default)]
+    pub title: String,
+    #[serde(default)]
+    pub body: String,
+    #[serde(default)]
+    pub tag: String,
+}
+
+/// `notify:{json}` from the page shim. Text is clipped for the banner.
+pub fn parse_notify(msg: &str) -> Option<PageNotification> {
+    // Objects only: serde would also accept `["id", ...]` for a struct.
+    let value: serde_json::Value = serde_json::from_str(msg.strip_prefix("notify:")?).ok()?;
+    if !value.is_object() {
+        return None;
+    }
+    let mut n: PageNotification = serde_json::from_value(value).ok()?;
+    if n.id.is_empty() || n.id.len() > 64 {
+        return None;
+    }
+    n.title = clip(&n.title, MAX_TITLE);
+    n.body = clip(&n.body, MAX_BODY);
+    n.tag = clip(&n.tag, MAX_TITLE);
+    Some(n)
+}
+
+fn clip(s: &str, max: usize) -> String {
+    match s.char_indices().nth(max) {
+        Some((i, _)) => format!("{}…", s[..i].trim_end()),
+        None => s.to_string(),
+    }
+}
+
+/// Native request id `<page id>#<seq>` back to the page's id.
+pub fn page_notification_id(native_id: &str) -> &str {
+    native_id.split('#').next().unwrap_or_default()
+}
+
+/// What a page notification should trigger. Banner and sound are separate
+/// settings; the banner is skipped while the user is looking at the window.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct AlertPlan {
+    pub banner: bool,
+    pub sound: bool,
+}
+
+pub fn alert_plan(prefs: &Prefs, window_focused: bool, window_visible: bool) -> AlertPlan {
+    AlertPlan {
+        banner: prefs.notification_popup && !(window_focused && window_visible),
+        sound: prefs.notification_sound != NotificationSound::Off,
+    }
+}
+
+/// Unique native request id that still maps back to the page's id.
+pub fn banner_id(page_id: &str, seq: u64) -> String {
+    format!("{page_id}#{seq}")
+}
+
+/// Banners need a title; the page may send none.
+pub fn banner_title(title: &str) -> &str {
+    if title.trim().is_empty() {
+        config::APP_NAME
+    } else {
+        title
+    }
+}
+
+/// Script that replays a banner click inside the page. The id is
+/// JSON-encoded so quotes or backslashes can't break out of the call.
+pub fn notification_click_js(native_id: &str) -> String {
+    let id = serde_json::Value::from(page_notification_id(native_id)).to_string();
+    format!("window.__gomsgNotifClick&&window.__gomsgNotifClick({id})")
+}
+
+/// Messages the Messages page may send. Anything else (unpair, prefs,
+/// banner preview) is Settings-only, so a hostile page script can't trigger it.
+pub fn page_ipc_event(body: &str) -> Option<UserEvent> {
+    if let Some((count, baseline)) = parse_unread(body) {
+        return Some(UserEvent::Unread { count, baseline });
+    }
+    let allowed = parse_notify(body).is_some()
+        || matches!(
+            body,
+            "open-settings" | "zoom-in" | "zoom-out" | "zoom-reset"
+        );
+    allowed.then(|| UserEvent::Ipc(body.to_string()))
+}
+
+fn sound_due(last: Option<Instant>, now: Instant) -> bool {
+    last.is_none_or(|t| now.duration_since(t) >= SOUND_DEDUPE)
 }
 
 fn should_play_sound(
@@ -121,6 +227,9 @@ impl GoMessages {
             tray: None,
             tray_ok: true,
             unread: 0,
+            last_sound: None,
+            banner_seq: 0,
+            main_focused: false,
             active_display: None,
             pending_display: None,
             using_fallback: false,
@@ -405,6 +514,11 @@ impl GoMessages {
     /// After the main window exists: tray, Dock state, Dock reopen hook.
     pub fn start_background(&mut self) {
         platform::install_reopen_handler(self.proxy.clone());
+        platform::keep_awake();
+        platform::init_notifications(self.proxy.clone());
+        if self.prefs.notification_popup {
+            self.request_banner_permission();
+        }
         if self.prefs.tray {
             self.set_tray(true);
         }
@@ -574,12 +688,76 @@ impl GoMessages {
         self.sync_settings_prefs();
     }
 
+    fn set_notification_popup(&mut self, on: bool) {
+        self.prefs.notification_popup = on;
+        self.prefs.save();
+        if on {
+            self.request_banner_permission();
+        }
+        self.sync_settings_prefs();
+    }
+
+    /// Prompts once; the answer refreshes Settings via `BannerStatusChanged`.
+    fn request_banner_permission(&self) {
+        let proxy = std::sync::Mutex::new(self.proxy.clone());
+        platform::request_banner_permission(move || {
+            if let Ok(p) = proxy.lock() {
+                let _ = p.send_event(UserEvent::BannerStatusChanged);
+            }
+        });
+    }
+
+    fn play_sound_once(&mut self) {
+        let now = Instant::now();
+        if sound_due(self.last_sound, now) {
+            self.last_sound = Some(now);
+            platform::play_system_notification();
+        }
+    }
+
+    fn post_banner(&mut self, n: &PageNotification) {
+        self.banner_seq += 1;
+        platform::post_banner(
+            &banner_id(&n.id, self.banner_seq),
+            banner_title(&n.title),
+            &n.body,
+            &n.tag,
+        );
+    }
+
+    /// The page asked for a web notification (it only does that for new
+    /// messages while it is in the background).
+    fn on_page_notification(&mut self, n: PageNotification) {
+        let window_visible = self
+            .main_window
+            .as_ref()
+            .and_then(|w| w.is_visible())
+            .unwrap_or(false);
+        let plan = alert_plan(&self.prefs, self.main_focused, window_visible);
+        if plan.banner {
+            self.post_banner(&n);
+        }
+        if plan.sound {
+            self.play_sound_once();
+        }
+    }
+
+    /// Banner click: bring the window back and let the page open the thread.
+    fn on_notification_clicked(&self, native_id: &str) {
+        self.show_main();
+        if let Some(v) = &self.main_view {
+            let _ = v.evaluate_script(&notification_click_js(native_id));
+        }
+    }
+
     fn set_unread(&mut self, unread: u32, baseline: bool) {
         if unread == self.unread {
             return;
         }
+        // Fallback for messages the page doesn't notify about (e.g. another
+        // thread while the window is focused). Deduped with the shim.
         if should_play_sound(self.unread, unread, baseline, self.prefs.notification_sound) {
-            platform::play_system_notification();
+            self.play_sound_once();
         }
         self.unread = unread;
         platform::set_badge(unread);
@@ -594,7 +772,21 @@ impl GoMessages {
             self.set_pref(key, on);
             return;
         }
+        if let Some(n) = parse_notify(msg) {
+            self.on_page_notification(n);
+            return;
+        }
         match msg {
+            "popup:on" => self.set_notification_popup(true),
+            "popup:off" => self.set_notification_popup(false),
+            "popup-preview" => {
+                self.post_banner(&PageNotification {
+                    id: "preview".into(),
+                    title: config::APP_NAME.into(),
+                    body: "This is how new messages will appear.".into(),
+                    tag: String::new(),
+                });
+            }
             "sound:on" => self.set_notification_sound(NotificationSound::SystemNotification),
             "sound:off" => self.set_notification_sound(NotificationSound::Off),
             "sound-preview" => {
@@ -624,6 +816,8 @@ impl GoMessages {
                 self.push_zoom_to_page();
             }
             UserEvent::Unread { count, baseline } => self.set_unread(count, baseline),
+            UserEvent::NotificationClicked(id) => self.on_notification_clicked(&id),
+            UserEvent::BannerStatusChanged => self.sync_settings_prefs(),
             UserEvent::Reopen => self.show_main(),
             UserEvent::TrayClick => self.toggle_main(),
             UserEvent::Menu(id) => self.on_menu(event_loop, id),
@@ -669,6 +863,7 @@ impl GoMessages {
                         event_loop.exit();
                     }
                 }
+                WindowEvent::Focused(focused) => self.main_focused = focused,
                 event @ (WindowEvent::Resized(_)
                 | WindowEvent::Moved(_)
                 | WindowEvent::ScaleFactorChanged { .. }) => {
@@ -759,14 +954,8 @@ pub fn build_main_window(
         .with_ipc_handler({
             let proxy = proxy.clone();
             move |req: http::Request<String>| {
-                let body = req.body();
-                if let Some((count, baseline)) = parse_unread(body) {
-                    let _ = proxy.send_event(UserEvent::Unread { count, baseline });
-                } else if matches!(
-                    body.as_str(),
-                    "open-settings" | "zoom-in" | "zoom-out" | "zoom-reset"
-                ) {
-                    let _ = proxy.send_event(UserEvent::Ipc(body.clone()));
+                if let Some(event) = page_ipc_event(req.body()) {
+                    let _ = proxy.send_event(event);
                 }
             }
         })
@@ -833,6 +1022,316 @@ mod tests {
         assert_eq!(parse_pref("zoom-in"), None);
     }
 
+    // ---- page notification payloads (shim -> Rust) ----
+
+    #[test]
+    fn notify_happy_path() {
+        let n = parse_notify(r#"notify:{"id":"3","title":"Ana","body":"hi","tag":"c1"}"#).unwrap();
+        assert_eq!(
+            n,
+            PageNotification {
+                id: "3".into(),
+                title: "Ana".into(),
+                body: "hi".into(),
+                tag: "c1".into(),
+            }
+        );
+    }
+
+    #[test]
+    fn notify_optional_fields_default_to_empty() {
+        let n = parse_notify(r#"notify:{"id":"4"}"#).unwrap();
+        assert_eq!(
+            (n.title.as_str(), n.body.as_str(), n.tag.as_str()),
+            ("", "", "")
+        );
+    }
+
+    #[test]
+    fn notify_ignores_unknown_fields() {
+        assert!(parse_notify(r#"notify:{"id":"1","icon":"x.png","silent":true}"#).is_some());
+    }
+
+    #[test]
+    fn notify_rejects_malformed_input() {
+        for bad in [
+            "notify:",
+            "notify:nope",
+            "notify:{}",
+            r#"notify:{"id":""}"#,
+            r#"notify:{"id":3}"#,
+            r#"notify:{"id":"1","title":5}"#,
+            r#"notify:{"id":"1","body":null}"#,
+            r#"notify:["1"]"#,
+            r#"notify {"id":"1"}"#,
+            r#"NOTIFY:{"id":"1"}"#,
+            "unread:3",
+            "",
+        ] {
+            assert_eq!(parse_notify(bad), None, "{bad:?} should be rejected");
+        }
+    }
+
+    #[test]
+    fn notify_id_length_limit() {
+        let ok = "a".repeat(64);
+        let too_long = "a".repeat(65);
+        assert!(parse_notify(&format!(r#"notify:{{"id":"{ok}"}}"#)).is_some());
+        assert!(parse_notify(&format!(r#"notify:{{"id":"{too_long}"}}"#)).is_none());
+    }
+
+    #[test]
+    fn notify_clips_long_text_on_char_boundaries() {
+        let at_limit = "é".repeat(MAX_BODY);
+        let n = parse_notify(&format!(r#"notify:{{"id":"1","body":"{at_limit}"}}"#)).unwrap();
+        assert_eq!(n.body, at_limit, "exactly the limit is not clipped");
+
+        let long = "🎉".repeat(MAX_BODY + 50);
+        let n = parse_notify(&format!(r#"notify:{{"id":"1","body":"{long}"}}"#)).unwrap();
+        assert_eq!(n.body.chars().count(), MAX_BODY + 1);
+        assert!(n.body.ends_with('…'));
+
+        let title = "t".repeat(MAX_TITLE * 2);
+        let tag = "g".repeat(MAX_TITLE * 2);
+        let n = parse_notify(&format!(
+            r#"notify:{{"id":"1","title":"{title}","tag":"{tag}"}}"#
+        ))
+        .unwrap();
+        assert_eq!(n.title.chars().count(), MAX_TITLE + 1);
+        assert_eq!(n.tag.chars().count(), MAX_TITLE + 1);
+    }
+
+    #[test]
+    fn clip_trims_trailing_space_before_ellipsis() {
+        assert_eq!(clip("abc   def", 6), "abc…");
+        assert_eq!(clip("abc", 3), "abc");
+        assert_eq!(clip("", 3), "");
+        assert_eq!(clip("abcd", 0), "…");
+    }
+
+    /// Same fixture the JS shim tests use: what the page posts must parse.
+    #[test]
+    fn notify_contract_fixture() {
+        #[derive(serde::Deserialize)]
+        struct Case {
+            name: String,
+            ipc: String,
+            parsed: PageNotification,
+        }
+        #[derive(serde::Deserialize)]
+        struct Fixture {
+            cases: Vec<Case>,
+        }
+        let f: Fixture =
+            serde_json::from_str(include_str!("../../../tests/fixtures/notify_payloads.json"))
+                .unwrap();
+        assert!(!f.cases.is_empty());
+        for c in f.cases {
+            assert_eq!(parse_notify(&c.ipc), Some(c.parsed), "case {:?}", c.name);
+        }
+    }
+
+    // ---- page IPC allowlist ----
+
+    #[test]
+    fn page_ipc_forwards_known_messages() {
+        assert!(matches!(
+            page_ipc_event("unread:2"),
+            Some(UserEvent::Unread {
+                count: 2,
+                baseline: false
+            })
+        ));
+        assert!(matches!(
+            page_ipc_event("unread-baseline:5"),
+            Some(UserEvent::Unread {
+                count: 5,
+                baseline: true
+            })
+        ));
+        for ok in [
+            "open-settings",
+            "zoom-in",
+            "zoom-out",
+            "zoom-reset",
+            r#"notify:{"id":"1"}"#,
+        ] {
+            assert!(
+                matches!(page_ipc_event(ok), Some(UserEvent::Ipc(ref m)) if m == ok),
+                "{ok} should be forwarded"
+            );
+        }
+    }
+
+    #[test]
+    fn page_ipc_blocks_settings_only_and_junk() {
+        for blocked in [
+            "unpair",
+            "pref:tray:1",
+            "pref:hide_dock:1",
+            "sound:off",
+            "sound-preview",
+            "popup:off",
+            "popup-preview",
+            "notify:garbage",
+            r#"notify:{"id":""}"#,
+            "unread:-1",
+            "unread:",
+            "zoom-in ",
+            "",
+        ] {
+            assert!(
+                page_ipc_event(blocked).is_none(),
+                "{blocked:?} must not pass"
+            );
+        }
+    }
+
+    // ---- alert decisions ----
+
+    fn prefs_with(popup: bool, sound: NotificationSound) -> Prefs {
+        Prefs {
+            notification_popup: popup,
+            notification_sound: sound,
+            ..Prefs::default()
+        }
+    }
+
+    #[test]
+    fn alert_plan_defaults_to_banner_and_sound_in_background() {
+        let plan = alert_plan(&Prefs::default(), false, false);
+        assert_eq!(
+            plan,
+            AlertPlan {
+                banner: true,
+                sound: true
+            }
+        );
+    }
+
+    #[test]
+    fn alert_plan_toggles_are_independent() {
+        let on = NotificationSound::SystemNotification;
+        let off = NotificationSound::Off;
+        let cases = [
+            (
+                true,
+                on,
+                AlertPlan {
+                    banner: true,
+                    sound: true,
+                },
+            ),
+            (
+                true,
+                off,
+                AlertPlan {
+                    banner: true,
+                    sound: false,
+                },
+            ),
+            (
+                false,
+                on,
+                AlertPlan {
+                    banner: false,
+                    sound: true,
+                },
+            ),
+            (
+                false,
+                off,
+                AlertPlan {
+                    banner: false,
+                    sound: false,
+                },
+            ),
+        ];
+        for (popup, sound, want) in cases {
+            assert_eq!(alert_plan(&prefs_with(popup, sound), false, true), want);
+        }
+    }
+
+    #[test]
+    fn alert_plan_skips_banner_only_when_window_is_in_front() {
+        let p = Prefs::default();
+        // (focused, visible) -> banner
+        assert!(!alert_plan(&p, true, true).banner, "user is looking at it");
+        assert!(
+            alert_plan(&p, false, true).banner,
+            "visible but another app in front"
+        );
+        assert!(
+            alert_plan(&p, true, false).banner,
+            "stale focus on hidden window"
+        );
+        assert!(alert_plan(&p, false, false).banner, "hidden window");
+        // Sound never depends on focus.
+        assert!(alert_plan(&p, true, true).sound);
+    }
+
+    // ---- banner ids, titles, click script ----
+
+    #[test]
+    fn banner_ids_round_trip_to_the_page() {
+        assert_eq!(banner_id("12", 3), "12#3");
+        assert_eq!(page_notification_id(&banner_id("12", 3)), "12");
+        assert_eq!(page_notification_id(&banner_id("sw7", 1)), "sw7");
+        assert_eq!(page_notification_id("preview#9"), "preview");
+        assert_eq!(page_notification_id("no-hash"), "no-hash");
+        assert_eq!(page_notification_id(""), "");
+        assert_eq!(page_notification_id("#5"), "");
+    }
+
+    #[test]
+    fn banner_ids_are_unique_per_seq() {
+        assert_ne!(banner_id("1", 1), banner_id("1", 2));
+    }
+
+    #[test]
+    fn banner_title_falls_back_to_app_name() {
+        assert_eq!(banner_title("Ana"), "Ana");
+        assert_eq!(banner_title(""), config::APP_NAME);
+        assert_eq!(banner_title("   "), config::APP_NAME);
+    }
+
+    #[test]
+    fn click_script_escapes_the_id() {
+        assert_eq!(
+            notification_click_js("12#3"),
+            r#"window.__gomsgNotifClick&&window.__gomsgNotifClick("12")"#
+        );
+        let js = notification_click_js(r#"a"); alert(1); ("#);
+        assert_eq!(
+            js,
+            r#"window.__gomsgNotifClick&&window.__gomsgNotifClick("a\"); alert(1); (")"#
+        );
+        assert!(notification_click_js(r"back\slash").contains(r#"("back\\slash")"#));
+    }
+
+    // ---- sound dedupe ----
+
+    #[test]
+    fn sound_is_deduped() {
+        let t0 = Instant::now();
+        assert!(sound_due(None, t0), "first sound always plays");
+        assert!(!sound_due(Some(t0), t0), "same instant");
+        assert!(!sound_due(
+            Some(t0),
+            t0 + SOUND_DEDUPE - Duration::from_millis(1)
+        ));
+        assert!(sound_due(Some(t0), t0 + SOUND_DEDUPE), "boundary plays");
+        assert!(sound_due(Some(t0), t0 + SOUND_DEDUPE * 10));
+    }
+
+    #[test]
+    fn sound_dedupe_survives_clock_going_backwards() {
+        let t0 = Instant::now();
+        let later = t0 + Duration::from_secs(60);
+        // `now` earlier than `last`: no panic, no sound.
+        assert!(!sound_due(Some(later), t0));
+    }
+
     #[test]
     fn notification_sound_only_follows_new_unread_count() {
         let on = NotificationSound::SystemNotification;
@@ -841,5 +1340,19 @@ mod tests {
         assert!(!should_play_sound(1, 1, false, on));
         assert!(!should_play_sound(2, 1, false, on));
         assert!(!should_play_sound(0, 1, false, NotificationSound::Off));
+        // Count drops to 0 then rises again: plays.
+        assert!(should_play_sound(0, 2, false, on));
+        assert!(!should_play_sound(u32::MAX, 0, false, on));
+    }
+
+    #[test]
+    fn parses_unread_edge_cases() {
+        assert_eq!(parse_unread("unread:0"), Some((0, false)));
+        assert_eq!(parse_unread("unread:4294967295"), Some((u32::MAX, false)));
+        assert_eq!(parse_unread("unread:4294967296"), None);
+        assert_eq!(parse_unread("unread:-1"), None);
+        assert_eq!(parse_unread("unread: 3"), None);
+        assert_eq!(parse_unread("unread-baseline:"), None);
+        assert_eq!(parse_unread("unread"), None);
     }
 }

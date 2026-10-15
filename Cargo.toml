@@ -33,7 +33,27 @@ chrono = { version = "0.4", optional = true }
 [target.'cfg(target_os = "macos")'.dependencies]
 core-foundation = "0.9.4"
 objc2 = "0.6"
-objc2-foundation = { version = "0.3", default-features = false, features = ["std", "NSString"] }
+block2 = "0.6"
+objc2-foundation = { version = "0.3", default-features = false, features = [
+  "std",
+  "block2",
+  "NSString",
+  "NSBundle",
+  "NSError",
+  "NSObject",
+  "NSProcessInfo",
+] }
+# Native banners (Notification Center) for the page's web notifications.
+objc2-user-notifications = { version = "0.3", default-features = false, features = [
+  "std",
+  "block2",
+  "UNNotification",
+  "UNNotificationContent",
+  "UNNotificationRequest",
+  "UNNotificationResponse",
+  "UNNotificationTrigger",
+  "UNUserNotificationCenter",
+] }
 objc2-app-kit = { version = "0.3", default-features = false, features = [
   "std",
   "NSApplication",

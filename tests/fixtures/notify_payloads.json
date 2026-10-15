@@ -1,0 +1,90 @@
+{
+ "_doc": "Contract between the page shim (webview.rs INIT_JS) and parse_notify (app.rs). JS tests assert the shim posts `ipc` for `title`+`options`; Rust tests assert parse_notify(`ipc`) == `parsed`.",
+ "cases": [
+  {
+   "name": "basic",
+   "title": "Ana",
+   "options": {
+    "body": "hey",
+    "tag": "conv1"
+   },
+   "parsed": {
+    "id": "1",
+    "title": "Ana",
+    "body": "hey",
+    "tag": "conv1"
+   },
+   "ipc": "notify:{\"id\":\"1\",\"title\":\"Ana\",\"body\":\"hey\",\"tag\":\"conv1\"}"
+  },
+  {
+   "name": "no options",
+   "title": "Ben",
+   "options": null,
+   "parsed": {
+    "id": "1",
+    "title": "Ben",
+    "body": "",
+    "tag": ""
+   },
+   "ipc": "notify:{\"id\":\"1\",\"title\":\"Ben\",\"body\":\"\",\"tag\":\"\"}"
+  },
+  {
+   "name": "null title",
+   "title": null,
+   "options": {
+    "body": "photo"
+   },
+   "parsed": {
+    "id": "1",
+    "title": "",
+    "body": "photo",
+    "tag": ""
+   },
+   "ipc": "notify:{\"id\":\"1\",\"title\":\"\",\"body\":\"photo\",\"tag\":\"\"}"
+  },
+  {
+   "name": "quotes, newline, emoji",
+   "title": "Zoë \"Z\"",
+   "options": {
+    "body": "line1\nline2 \\ 🎉 </script>",
+    "tag": "t"
+   },
+   "parsed": {
+    "id": "1",
+    "title": "Zoë \"Z\"",
+    "body": "line1\nline2 \\ 🎉 </script>",
+    "tag": "t"
+   },
+   "ipc": "notify:{\"id\":\"1\",\"title\":\"Zoë \\\"Z\\\"\",\"body\":\"line1\\nline2 \\\\ 🎉 </script>\",\"tag\":\"t\"}"
+  },
+  {
+   "name": "non-string body",
+   "title": "Cal",
+   "options": {
+    "body": 42,
+    "tag": 7
+   },
+   "parsed": {
+    "id": "1",
+    "title": "Cal",
+    "body": "42",
+    "tag": "7"
+   },
+   "ipc": "notify:{\"id\":\"1\",\"title\":\"Cal\",\"body\":\"42\",\"tag\":\"7\"}"
+  },
+  {
+   "name": "long body is clipped by Rust",
+   "title": "Dee",
+   "options": {
+    "body": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+   },
+   "parsed": {
+    "id": "1",
+    "title": "Dee",
+    "body": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx…",
+    "tag": ""
+   },
+   "ipc": "notify:{\"id\":\"1\",\"title\":\"Dee\",\"body\":\"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\",\"tag\":\"\"}"
+  }
+ ]
+}

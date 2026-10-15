@@ -75,6 +75,9 @@ pub struct Prefs {
     /// Last active zoom and geometry, retained for older settings files.
     pub zoom_idx: usize,
     pub notification_sound: NotificationSound,
+    /// Native banner (Notification Center) for new messages. Independent of
+    /// the sound.
+    pub notification_popup: bool,
     pub window: Option<Geometry>,
     pub displays: HashMap<String, DisplayProfile>,
     pub last_monitor: Option<String>,
@@ -91,6 +94,7 @@ impl Default for Prefs {
         Self {
             zoom_idx: DEFAULT_IDX,
             notification_sound: NotificationSound::default(),
+            notification_popup: true,
             window: None,
             displays: HashMap::new(),
             last_monitor: None,
@@ -214,6 +218,7 @@ mod tests {
         let p = Prefs {
             zoom_idx: 10,
             notification_sound: NotificationSound::Off,
+            notification_popup: false,
             window: Some(Geometry {
                 x: 5,
                 y: 6,
@@ -237,6 +242,7 @@ mod tests {
         let p = Prefs::load_from(&d);
         assert_eq!(p.zoom_idx, 9);
         assert_eq!(p.notification_sound, NotificationSound::SystemNotification);
+        assert!(p.notification_popup);
         assert!(p.keep_running);
     }
 
@@ -277,6 +283,55 @@ mod tests {
         let p = Prefs::load_from(&d);
         assert_eq!(p.displays["screen"].zoom_idx, DEFAULT_IDX);
         assert_eq!(p.displays["screen"].window, None);
+    }
+
+    #[test]
+    fn settings_from_before_banners_enable_them() {
+        let d = tmp_dir("pre-banner");
+        std::fs::write(
+            d.join(FILE),
+            br#"{"zoom_idx":7,"notification_sound":"off","keep_running":false}"#,
+        )
+        .unwrap();
+        let p = Prefs::load_from(&d);
+        assert!(p.notification_popup, "missing field defaults on");
+        assert_eq!(
+            p.notification_sound,
+            NotificationSound::Off,
+            "sound choice kept"
+        );
+        assert!(!p.keep_running);
+    }
+
+    #[test]
+    fn banner_and_sound_persist_independently() {
+        let d = tmp_dir("alerts");
+        for (popup, sound) in [
+            (true, NotificationSound::Off),
+            (false, NotificationSound::SystemNotification),
+            (false, NotificationSound::Off),
+        ] {
+            let p = Prefs {
+                notification_popup: popup,
+                notification_sound: sound,
+                ..Prefs::default()
+            };
+            p.save_to(&d);
+            let back = Prefs::load_from(&d);
+            assert_eq!(
+                (back.notification_popup, back.notification_sound),
+                (popup, sound)
+            );
+        }
+    }
+
+    #[test]
+    fn wrong_type_falls_back_to_defaults() {
+        let d = tmp_dir("bad-popup");
+        std::fs::write(d.join(FILE), br#"{"notification_popup":"yes"}"#).unwrap();
+        assert_eq!(Prefs::load_from(&d), Prefs::default());
+        std::fs::write(d.join(FILE), br#"{"notification_sound":"loud"}"#).unwrap();
+        assert_eq!(Prefs::load_from(&d), Prefs::default());
     }
 
     #[test]

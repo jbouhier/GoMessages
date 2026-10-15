@@ -1,4 +1,4 @@
-//! Embedded page: keybind/unread init script + webview bounds math.
+//! Embedded page: keybind/unread/notification init script + webview bounds math.
 
 use gomessages::config::TOP_INSET;
 use winit::window::Window;
@@ -79,6 +79,37 @@ if(k===','||e.code==='Comma'){try{window.ipc.postMessage('open-settings');}catch
 var action=plus?'zoom-in':minus?'zoom-out':zero?'zoom-reset':null;
 if(action){try{window.ipc.postMessage(action);}catch(x){}e.preventDefault();e.stopImmediatePropagation();}
 },true);
+// Web notifications. WKWebView has no Notification API, so the page's own
+// "new message" alerts went nowhere. This stand-in reports permission as
+// granted and forwards each notification to Rust (banner + sound there).
+// The page still decides when to notify (background only), and clicking the
+// banner runs the page's own onclick, which opens that conversation.
+if(location.hostname==='messages.google.com'){(function(){
+var seq=0,live=Object.create(null),order=[];
+function post(n){try{window.ipc.postMessage('notify:'+JSON.stringify(n));}catch(e){}}
+function keep(id,n){live[id]=n;order.push(id);if(order.length>50){delete live[order.shift()];}}
+function GoNotification(title,opts){
+opts=opts||{};var id=String(++seq);
+this.title=String(title==null?'':title);this.body=String(opts.body||'');this.tag=String(opts.tag||'');
+this.data=opts.data===undefined?null:opts.data;this.icon=opts.icon||'';this.silent=!!opts.silent;
+this.onclick=null;this.onclose=null;this.onshow=null;this.onerror=null;this.__id=id;this.__l={};
+keep(id,this);post({id:id,title:this.title,body:this.body,tag:this.tag});
+var self=this;setTimeout(function(){self.__fire('show');},0);}
+GoNotification.prototype.addEventListener=function(t,f){(this.__l[t]=this.__l[t]||[]).push(f);};
+GoNotification.prototype.removeEventListener=function(t,f){var a=this.__l[t]||[];var i=a.indexOf(f);if(i>=0)a.splice(i,1);};
+GoNotification.prototype.__fire=function(t){var ev={type:t,target:this,currentTarget:this,defaultPrevented:false,preventDefault:function(){this.defaultPrevented=true;}};
+var h=this['on'+t];if(typeof h==='function'){try{h.call(this,ev);}catch(e){}}
+var a=(this.__l[t]||[]).slice();for(var i=0;i<a.length;i++){try{a[i].call(this,ev);}catch(e){}}};
+GoNotification.prototype.close=function(){if(live[this.__id]){delete live[this.__id];this.__fire('close');}};
+GoNotification.permission='granted';GoNotification.maxActions=0;
+GoNotification.requestPermission=function(cb){if(typeof cb==='function'){try{cb('granted');}catch(e){}}return Promise.resolve('granted');};
+try{Object.defineProperty(window,'Notification',{value:GoNotification,writable:true,configurable:true});}catch(e){window.Notification=GoNotification;}
+window.__gomsgNotifClick=function(id){var n=live[String(id)];try{window.focus();}catch(e){}if(n instanceof GoNotification){n.__fire('click');}};
+try{if(window.ServiceWorkerRegistration){ServiceWorkerRegistration.prototype.showNotification=function(title,opts){opts=opts||{};post({id:'sw'+(++seq),title:String(title||''),body:String(opts.body||''),tag:String(opts.tag||'')});return Promise.resolve();};
+ServiceWorkerRegistration.prototype.getNotifications=function(){return Promise.resolve([]);};}}catch(e){}
+try{if(navigator.permissions&&navigator.permissions.query){var q=navigator.permissions.query.bind(navigator.permissions);
+navigator.permissions.query=function(d){if(d&&d.name==='notifications'){return Promise.resolve({name:'notifications',state:'granted',onchange:null,addEventListener:function(){},removeEventListener:function(){}});}return q(d);};}}catch(e){}
+})();}
 // Unread count for the Dock badge / tray dot: "(N)" in the title, or unread
 // rows in the conversation list, whichever is higher. Polled; posts on change.
 if(location.hostname==='messages.google.com'){

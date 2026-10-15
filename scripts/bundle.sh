@@ -12,7 +12,8 @@ mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
 cp "$BIN" "$APP/Contents/MacOS/GoMessages"
 cp "$(dirname "$0")/../assets/GoMessages.icns" "$APP/Contents/Resources/GoMessages.icns"
 
-cat > "$APP/Contents/Info.plist" <<'PLIST'
+# Unquoted heredoc: $VERSION must expand.
+cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -31,4 +32,9 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
 </dict>
 </plist>
 PLIST
+# Ad-hoc sign so macOS accepts it for Notification Center banners. Release
+# CI re-signs (ad-hoc or Developer ID) after this.
+if command -v codesign >/dev/null 2>&1; then
+  codesign --force --deep --sign - "$APP"
+fi
 echo "bundle: $APP (copy to /Applications, then run the .app, not the binary)"

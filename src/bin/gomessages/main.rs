@@ -37,6 +37,12 @@ enum UserEvent {
         count: u32,
         baseline: bool,
     },
+    /// Notification Center banner clicked (native request id).
+    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+    NotificationClicked(String),
+    /// macOS answered the notification permission request.
+    #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
+    BannerStatusChanged,
     /// macOS Dock click / relaunch while running.
     #[cfg_attr(not(target_os = "macos"), allow(dead_code))]
     Reopen,

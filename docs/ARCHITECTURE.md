@@ -29,13 +29,13 @@ no protocol reverse-engineering (breaks on every Google change).
 | Web engine | `wry` 0.57 (`WKWebView` on mac) | the Messages page, persistent `WebContext` profile |
 | Menu bar | `muda` 0.21 | GoMessages / Edit / View / Window menus; `Cmd+,` and zoom `Cmd+=/-/0` accelerators |
 | Zoom | `wry` page zoom | per-monitor level in `settings.json`, re-applied on page load |
-| Sound | `NSSound` / OS alert API | optional system sound when unread count rises; preview in Settings |
+| Alerts | `UserNotifications` + `NSSound` (macOS) | banner and sound, toggled separately. Init script replaces the page's missing `window.Notification`; Rust posts a silent banner and plays its own sound. Unread poller is the sound fallback (deduped). Banners need the bundled, signed `.app`. App Nap off so a hidden window keeps receiving. |
 | Tray / menu bar icon | `tray-icon` 0.26 | Open / Settings / Quit, unread dot; opt-in on Linux (AppIndicator) |
 | Platform glue | `objc2` (macOS), `gtk` (Linux) | Dock icon on/off, Dock badge, Dock-click reopen; GTK init + pump |
 | Settings window | second `wry` view | local HTML + `window.ipc.postMessage` bridge |
 
 No JavaScript framework, no bundler in the app. The only frontend code is
-two small scripts: the init script (keybinds, splash, unread poller) and the
+two small scripts: the init script (keybinds, splash, unread poller, notification shim) and the
 settings page.
 
 ## Data on disk
