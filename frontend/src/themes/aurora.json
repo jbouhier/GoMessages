@@ -1,0 +1,58 @@
+{
+  "$schema": "./theme.schema.json",
+  "format": 1,
+  "id": "aurora",
+  "name": "Aurora",
+  "order": 4,
+  "credit": "Orchid fringes of a polar night",
+  "light": {
+    "base": "#fbf6fc",
+    "mantle": "#f5edf7",
+    "surface0": "#ecdff0",
+    "surface1": "#dccbe3",
+    "text": "#2a1830",
+    "subtext": "#523c5a",
+    "accent": "#9a2c86",
+    "onAccent": "#ffffff",
+    "red": "#b3261e",
+    "yellow": "#9a6a0c",
+    "background": {
+      "mesh": {
+        "colors": [
+          "#f8eefb",
+          "#e6cdf2",
+          "#cdeee6",
+          "#f4dff0"
+        ],
+        "distortion": 0.9,
+        "swirl": 0.5,
+        "frame": 57000
+      }
+    }
+  },
+  "dark": {
+    "base": "#10132a",
+    "mantle": "#0b0e20",
+    "surface0": "#1e2346",
+    "surface1": "#2b315c",
+    "text": "#e6e9ff",
+    "subtext": "#b9bfe3",
+    "accent": "#f0a6e0",
+    "onAccent": "#1a0b1a",
+    "red": "#ff8a9b",
+    "yellow": "#f2d48a",
+    "background": {
+      "mesh": {
+        "colors": [
+          "#0b1026",
+          "#2a3f9e",
+          "#5b2a96",
+          "#13608a"
+        ],
+        "distortion": 0.9,
+        "swirl": 0.5,
+        "frame": 57000
+      }
+    }
+  }
+}

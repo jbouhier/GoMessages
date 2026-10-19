@@ -1,0 +1,58 @@
+{
+  "$schema": "./theme.schema.json",
+  "format": 1,
+  "id": "amber",
+  "name": "Amber",
+  "order": 6,
+  "credit": "Sunrise on the light side, sunset on the dark",
+  "light": {
+    "base": "#fffaf0",
+    "mantle": "#fdf3e1",
+    "surface0": "#f7e6c6",
+    "surface1": "#ecd3a6",
+    "text": "#2b2012",
+    "subtext": "#574329",
+    "accent": "#8a5300",
+    "onAccent": "#ffffff",
+    "red": "#b3261e",
+    "yellow": "#9a6a0c",
+    "background": {
+      "mesh": {
+        "colors": [
+          "#fff3d9",
+          "#ffd98f",
+          "#ffc06e",
+          "#ffe8c4"
+        ],
+        "distortion": 0.85,
+        "swirl": 0.4,
+        "frame": 31000
+      }
+    }
+  },
+  "dark": {
+    "base": "#1e1512",
+    "mantle": "#17100d",
+    "surface0": "#2f221b",
+    "surface1": "#45332a",
+    "text": "#fbecd9",
+    "subtext": "#dcc0a2",
+    "accent": "#f5c15c",
+    "onAccent": "#231503",
+    "red": "#ff9c91",
+    "yellow": "#f2c46d",
+    "background": {
+      "mesh": {
+        "colors": [
+          "#1a1210",
+          "#5a2e1c",
+          "#a5652a",
+          "#2c1a12"
+        ],
+        "distortion": 0.85,
+        "swirl": 0.4,
+        "frame": 31000
+      }
+    }
+  }
+}

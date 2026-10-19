@@ -3,56 +3,48 @@ title: Troubleshooting
 description: Fix common GoMessages problems.
 ---
 
-## Pairing asks about Bluetooth
+## Sign-in window says the browser isn't supported
 
-Turn Bluetooth on, on both computer and phone, and keep them close together.
-Pairing verifies proximity.
+Google sometimes blocks sign-in from apps it doesn't recognize. Close the
+window, update your system (on Linux, WebKitGTK; on Windows, Microsoft Edge
+WebView2), and try again. If it keeps happening, please
+[open an issue](https://github.com/jbouhier/GoMessages/issues) with your
+system and version.
 
-## Logged out after a few weeks
+## The emoji doesn't show on my phone
 
-Google expires inactive pairings automatically. Pair again. Nothing is broken.
+Open Google Messages on your phone and make sure it's online. Cancel and
+choose **Sign in with Google** again.
 
-## Start completely fresh
+## "Phone offline"
 
-Settings → Unpair, relaunch the app, pair again. This wipes the local web
-profile, including login state.
+Messages sync through your phone. Check that it's on, connected, and that
+Google Messages isn't restricted by battery saving.
 
-## Closing the window doesn't quit
+## Signed out after a few weeks
 
-By design: the app keeps running so messages keep arriving. Reopen it from the
-Dock (Mac) or the tray icon. Quit with `Cmd+Q` (`Ctrl+Q` elsewhere) or Quit in
-the tray menu. To quit on close, turn off **Keep running when the window is
-closed** in [Settings](/GoMessages/settings/).
+Google ends pairings it doesn't see used. Pair again. Nothing is broken.
 
-## Can't find the app after hiding the Dock icon (Mac)
+## Start fresh
 
-With **Hide Dock icon** on, the app lives in the menu bar only. Click its icon
-there → Open. Turning the menu bar icon off brings the Dock icon back.
+**Settings → Account → Unpair…**, then sign in again.
 
-## No unread badge
+## Mac says the app can't be opened
 
-The count is read from the Messages page. If Google changes the page, the
-badge can stop updating while messages still arrive. Please
-[open an issue](https://github.com/jbouhier/GoMessages/issues).
-
-## No tray icon on Linux
-
-The tray needs AppIndicator support:
-
-- Install `libayatana-appindicator3-1` (Debian/Ubuntu).
-- On GNOME, also enable the AppIndicator extension.
-
-Settings shows "No tray available on this desktop" when neither is present.
-Without a tray, closing the window quits the app.
-
-## Downloaded app won't open
-
-Unsigned builds are blocked by Gatekeeper on first launch: right-click the
-app → Open → Open. If macOS says the app "is damaged", strip the download
-quarantine instead:
+Right-click GoMessages in Applications, choose **Open**, then **Open**. If
+macOS says the app "is damaged", run:
 
 ```sh
 xattr -cr /Applications/GoMessages.app
 ```
 
-Signed + notarized releases (once set up) open normally.
+## No notifications
+
+Check **Settings → Notifications**, that the conversation isn't muted, and
+that your system allows notifications from GoMessages.
+
+
+## Linux: the app doesn't start
+
+Install GTK 4 and WebKitGTK 6.0 (see
+[getting started](/GoMessages/getting-started/#linux-requirements)).

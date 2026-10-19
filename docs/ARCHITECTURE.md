@@ -1,60 +1,99 @@
+# Architecture
 
-GoMessages is a thin native frame around the real Google Messages web
-client. The page owns chat, auth, and pairing. The binary owns the window,
-the menu, persistence, and polish.
+GoMessages is one process: a Go backend that speaks the Google Messages
+protocol, and a Svelte UI in the system web view. [Wails v3](https://v3.wails.io)
+provides the window, the menu bar, the bridge between the two,
+notifications, and dialogs.
 
-## Why a wrapper, not a reimplementation
+```
+┌──────────────── GoMessages ────────────────┐
+│ Svelte UI (frontend/)                      │
+│   ↑ events "gm"         ↓ Messages.Call(…) │
+│ Wails service: Messages (service.go)       │
+│   ↓ backend interface (bridge.go)          │
+│ daemon.go (libgm)  or  demo.go             │
+└───────────────┬────────────────────────────┘
+                │ long-polling + RPC
+       Google Messages relay ⇄ your phone
+```
 
-There is no public Messages API. Login, pairing (including the Bluetooth
-proximity check), relay, and RCS live in Google's proprietary web client.
-Every embedding attempt confirmed the same rule: **the engine decides what
-works, the frame is just chrome.**
+## Why a client, not a web wrapper
 
-- Chrome `--app` host: pairing works (real Chromium + Bluetooth), frame is Chromium.
-- Tauri spike: `WKWebView` has no Bluetooth API, pairing fails. Dead end.
-- `egui` + `wry` hybrid: same `WKWebView`, same result, until Bluetooth was
-  enabled on both ends, at which point pairing passed. Engine + proximity,
-  not toolkit.
+Up to 0.3.0, GoMessages showed Google's web page in a native window. The
+page decided what was possible: no real shortcuts, unread state scraped
+from the page, and pairing that depended on the web engine supporting
+Bluetooth. From 0.4.0, the app uses
+[libgm](https://github.com/mautrix/gmessages), the protocol library behind
+mautrix-gmessages, and draws its own UI. libgm is AGPL-3.0, so GoMessages
+is too.
 
-Every approach lived or died on the web engine and Bluetooth, never on the frame around it.
+## Backend
 
-So: native Rust window, real page inside. No Electron (150 MB+, flagged UA),
-no protocol reverse-engineering (breaks on every Google change).
+- `service.go`: `Messages`, the Wails service the UI calls. `Call(cmd, args)`
+  runs one protocol command (`conversations`, `messages`, `send`, `react`,
+  `download`, …). The other methods are desktop work: sign-in, file
+  dialogs, notifications, appearance, zoom.
+- `daemon.go`: the libgm client. It loads `session.json`, connects, keeps a
+  conversation cache, and turns libgm events into UI events (`state`,
+  `conversation`, `message`, `typing`, `pair_emoji`, …).
+- `demo.go`: the same `backend` interface with sample conversations, for
+  `--demo`, the UI tests, and screenshots.
+- `model.go`: the JSON shapes the UI receives, converted from libgm's protobufs.
+- `settings.go`, `settings_migrate.go`: `settings.json`, with the window's
+  place tracked by Go and older settings converted on load.
+- `server.go`: `--serve addr` exposes the same service over HTTP (`/rpc/{method}`)
+  and server-sent events (`/events`), so the UI runs in a normal browser.
 
-## Runtime pieces
+## Sign-in
 
-| Piece | Crate | Job |
-|---|---|---|
-| Window + event loop | `winit` 0.30 | native window, transparent titlebar (macOS) |
-| Web engine | `wry` 0.57 (`WKWebView` on mac) | the Messages page, persistent `WebContext` profile |
-| Menu bar | `muda` 0.21 | GoMessages / Edit / View / Window menus; `Cmd+,` and zoom `Cmd+=/-/0` accelerators |
-| Zoom | `wry` page zoom | per-monitor level in `settings.json`, re-applied on page load |
-| Alerts | `UserNotifications` + `NSSound` (macOS) | banner and sound, toggled separately. Init script replaces the page's missing `window.Notification`; Rust posts a silent banner and plays its own sound. Unread poller is the sound fallback (deduped). Banners need the bundled, signed `.app`. App Nap off so a hidden window keeps receiving. |
-| Tray / menu bar icon | `tray-icon` 0.26 | Open / Settings / Quit, unread dot; opt-in on Linux (AppIndicator) |
-| Platform glue | `objc2` (macOS), `gtk` (Linux) | Dock icon on/off, Dock badge, Dock-click reopen; GTK init + pump |
-| Settings window | second `wry` view | local HTML + `window.ipc.postMessage` bridge |
+Pairing uses a Google account and an emoji, not a QR code:
 
-No JavaScript framework, no bundler in the app. The only frontend code is
-two small scripts: the init script (keybinds, splash, unread poller, notification shim) and the
-settings page.
+1. `SignIn()` opens Google's sign-in page in a second web view window.
+2. When that window reaches `https://messages.google.com/web/config`, the
+   app reads Google's session cookies (`SID`, `HSID`, `SSID`, `OSID`,
+   `APISID`, `SAPISID`) from the window's cookie store and closes it.
+3. `pair_google` hands the cookies to libgm. The phone shows a prompt, the
+   app shows the emoji to tap, and libgm saves the result to `session.json`.
+
+Each platform reads the URL and cookies from its own web engine, since
+Wails has no cookie API:
+
+| Platform | File | Page-load event | Cookie store |
+|---|---|---|---|
+| macOS | `webviewauth_darwin.go` | `Mac.WebViewDidCommitNavigation` | `WKHTTPCookieStore` (Objective-C via cgo) |
+| Windows | `webviewauth_windows.go` | `Windows.WebViewNavigationCompleted` | WebView2 `ICoreWebView2CookieManager` (COM vtable calls) |
+| Linux | `webviewauth_linux.go` | `Linux.WindowLoadCommitted` | WebKitGTK `WebKitCookieManager` (cgo; GTK 4 by default, GTK 3 with `-tags gtk3`) |
+
+On Windows and Linux, the web view handle is a private field of Wails'
+window. `webviewauth_native.go` reads it by name with `reflect`, so a Wails
+upgrade that renames it makes sign-in fail with a message, not crash.
+Check sign-in on both platforms after bumping Wails in `go.mod`.
+
+## UI
+
+Svelte 5 with runes, built by Vite into `frontend/dist`, which is embedded
+in the binary. `frontend/src/lib/app.svelte.ts` holds the state: it calls
+`Messages` through the generated bindings (`frontend/bindings/`) and
+applies backend events. Themes are JSON files checked against
+`theme.schema.json` (see [THEMING](THEMING.md)).
+
+Shortcuts with `Cmd`/`Ctrl` live in the native menu (`buildMenu` in
+`main.go`), which sends an `action` event to the UI. Keys without a
+modifier are handled in the UI.
 
 ## Data on disk
 
-All under the app data dir (`~/Library/Application Support/dev.go-messages.go-messages/`
-on macOS):
+All under the OS config folder, in `GoMessages/` (for example
+`~/Library/Application Support/GoMessages/` on macOS,
+`%AppData%\GoMessages\` on Windows, `~/.config/GoMessages/` on Linux).
+The folder and files are readable by the owner only.
 
-- `settings.json`, per-monitor zoom and window geometry, background/tray/Dock choices.
-  Migrated once from older `zoom.json` / `window.json`.
-- `webview-profile/`, cookies, login, pairing.
-- `UNPAIR_ON_NEXT_LAUNCH`, flag file; next start wipes the profile, then
-  removes itself.
+- `session.json`: the libgm pairing. Treat it like account credentials.
+- `settings.json`: appearance, notifications, chats, zoom, window place.
+- `media/`: downloaded photos, files, and contact photos. The UI loads them
+  through `/media/<file>`, which serves nothing outside this folder.
+- `demo/`: the same layout for `--demo`.
 
-Paths and globals live in one place: `src/config.rs`.
-
-## Native prototype (separate track)
-
-`src/lib.rs` holds an `egui`-based native client shell: mock conversations,
-local JSON store with send-outbox, and a real Google OAuth desktop flow
-(PKCE loopback). It proves the native-UI direction but carries no traffic. Sync needs the undiscovered Messages scope and endpoints.
-
-Next: [CODEBASE](CODEBASE.md) for setup, build, and the file map.
+Builds named "GoMessages Next" used `GoMessagesNext/`. It's moved to
+`GoMessages/` on first launch. The 0.3.0 web wrapper's profile isn't
+read, so updating from it means pairing again.

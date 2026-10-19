@@ -1,0 +1,351 @@
+/* gogo-messages' palette (theme.rs), as CSS variables. */
+:root,
+:root[data-theme="light"] {
+  --bg: #ffffff;
+  --sidebar: #f3f6fc;
+  --selected: #d3e3fd;
+  --hover: #e6ecf6;
+  --text: #1f1f1f;
+  --subtle: #5f6368;
+  --accent: #0b57d0;
+  --on-accent: #ffffff;
+  --bubble-out: #d3e3fd;
+  --on-bubble-out: #041e49;
+  --bubble-in: #f0f2f5;
+  --composer: #f0f2f5;
+  --divider: #e1e3e1;
+  --danger: #b3261e;
+  --warn-bg: #fef7e0;
+  --shadow: rgba(0, 0, 0, 0.18);
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #131314;
+  --sidebar: #1b1b1d;
+  --selected: #004a77;
+  --hover: #282a2d;
+  --text: #e3e3e3;
+  --subtle: #9aa0a6;
+  --accent: #a8c7fa;
+  --on-accent: #062e6f;
+  --bubble-out: #004a77;
+  --on-bubble-out: #d3e3fd;
+  --bubble-in: #2a2b2e;
+  --composer: #282a2d;
+  --divider: #2e3033;
+  --danger: #f28b82;
+  --warn-bg: #423710;
+  --shadow: rgba(0, 0, 0, 0.5);
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #131314;
+    --sidebar: #1b1b1d;
+    --selected: #004a77;
+    --hover: #282a2d;
+    --text: #e3e3e3;
+    --subtle: #9aa0a6;
+    --accent: #a8c7fa;
+    --on-accent: #062e6f;
+    --bubble-out: #004a77;
+    --on-bubble-out: #d3e3fd;
+    --bubble-in: #2a2b2e;
+    --composer: #282a2d;
+    --divider: #2e3033;
+    --danger: #f28b82;
+    --warn-bg: #423710;
+    --shadow: rgba(0, 0, 0, 0.5);
+    color-scheme: dark;
+  }
+}
+
+/* What paints the window, the conversation side, and the list. The panes'
+   opacity comes from App.svelte: the theme's own (100%, or less where it
+   has a background to show) scaled down by the transparency setting. With
+   the system blur on, the window itself is clear. */
+:root {
+  --pane-alpha: 100%;
+  --list-alpha: 100%;
+  --window: var(--bg);
+  --pane: color-mix(in srgb, var(--bg) var(--pane-alpha), transparent);
+  --pane-list: color-mix(in srgb, var(--sidebar) var(--list-alpha), transparent);
+  --glass: color-mix(in srgb, var(--bg) 62%, transparent);
+  --glass-edge: rgba(255, 255, 255, 0.5);
+}
+:root.dark {
+  --glass-edge: rgba(255, 255, 255, 0.12);
+}
+:root.blur {
+  --window: transparent;
+}
+
+/* Something shows behind the panes (a theme background, or transparency):
+   fields and cards turn to frosted glass, menus let a little through.
+   Bubbles stay solid. */
+:root.see-through .glass {
+  background: var(--glass);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  backdrop-filter: blur(18px) saturate(1.15);
+  box-shadow: inset 0 0 0 1px var(--glass-edge);
+}
+:root.see-through .menu,
+:root.see-through .switcher,
+:root.see-through .sheet {
+  background: color-mix(in srgb, var(--bg) 88%, transparent);
+  -webkit-backdrop-filter: blur(30px) saturate(1.3);
+  backdrop-filter: blur(30px) saturate(1.3);
+}
+
+/* Sky: white glass with a hairline edge on blue. */
+:root.sky {
+  --glass: rgba(255, 255, 255, 0.09);
+  --glass-edge: rgba(255, 255, 255, 0.2);
+}
+:root.sky .menu,
+:root.sky .switcher,
+:root.sky .sheet {
+  border-color: var(--glass-edge);
+}
+:root.sky .secondary,
+:root.sky kbd {
+  background: rgba(255, 255, 255, 0.12);
+  box-shadow: inset 0 0 0 1px var(--glass-edge);
+}
+:root.sky .secondary:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Selected and hovered rows, cells, and buttons (ZapFast's row highlight). */
+:root {
+  --row-radius: 10px;
+  /* Room for the macOS traffic lights over our own headers. */
+  --top-inset: 0px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", system-ui, sans-serif;
+  font-size: 14.5px;
+  -webkit-font-smoothing: antialiased;
+}
+:root.mac {
+  --top-inset: 28px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+/* Thin scrollbars that show only while the pointer is over the pane, like
+   macOS overlay scrollbars, whatever the system's "show scroll bars" says. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border: 3px solid transparent;
+  border-radius: 5px;
+  background-clip: padding-box;
+  background-color: transparent;
+}
+:hover::-webkit-scrollbar-thumb {
+  background-color: color-mix(in srgb, var(--subtle) 55%, transparent);
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--window);
+  color: var(--text);
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: default;
+}
+
+/* One focus ring for the keyboard everywhere, in the theme's accent. */
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.menu button.item:focus-visible {
+  outline-offset: -2px;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+}
+
+input,
+textarea {
+  font: inherit;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  outline: none;
+  user-select: text;
+  -webkit-user-select: text;
+  cursor: text;
+}
+
+::placeholder {
+  color: var(--subtle);
+}
+
+.drag {
+  --wails-draggable: drag;
+}
+.no-drag,
+.drag button,
+.drag input {
+  --wails-draggable: no-drag;
+}
+
+.icon-button {
+  display: inline-grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  color: var(--subtle);
+}
+.icon-button:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.primary {
+  background: var(--accent);
+  color: var(--on-accent);
+  border-radius: 24px;
+  padding: 12px 28px;
+  font-size: 15px;
+}
+.primary:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.secondary {
+  background: var(--composer);
+  color: var(--text);
+  border-radius: 18px;
+  padding: 7px 16px;
+}
+.secondary:hover {
+  background: var(--hover);
+}
+
+.subtle {
+  color: var(--subtle);
+}
+.small {
+  font-size: 12px;
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  border: 2.5px solid var(--divider);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Popup menus: context menus, the SIM picker. */
+.menu {
+  position: fixed;
+  z-index: 50;
+  min-width: 200px;
+  padding: 6px;
+  background: var(--bg);
+  border: 1px solid var(--divider);
+  border-radius: 12px;
+  box-shadow: 0 8px 28px var(--shadow);
+}
+.menu button.item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-radius: var(--row-radius);
+  text-align: left;
+}
+.menu button.item:hover,
+.menu button.item:focus-visible {
+  background: var(--hover);
+}
+.menu button.item.danger {
+  color: var(--danger);
+}
+.menu hr {
+  border: none;
+  border-top: 1px solid var(--divider);
+  margin: 6px 4px;
+}
+
+/* Modals: switcher, shortcuts. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: rgba(0, 0, 0, 0.35);
+}
+
+.switch {
+  position: relative;
+  width: 40px;
+  height: 22px;
+  border-radius: 11px;
+  background: var(--divider);
+  transition: background 0.15s;
+  flex: none;
+}
+.switch::after {
+  content: "";
+  position: absolute;
+  top: 2.5px;
+  left: 3px;
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.15s;
+}
+.switch.on {
+  background: var(--accent);
+}
+.switch.on::after {
+  transform: translateX(17px);
+}
+
+kbd {
+  font: inherit;
+  font-size: 13px;
+  background: var(--composer);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+/* Theme, mode and background changes crossfade the whole window
+   (app.restyle). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.3s;
+  animation-timing-function: ease-out;
+}

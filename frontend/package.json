@@ -1,0 +1,26 @@
+{
+  "name": "frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build:dev": "vite build --minify false --mode development",
+    "build": "vite build --mode production",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@paper-design/shaders": "0.0.81",
+    "@wailsio/runtime": "3.0.0-beta.29",
+    "emoji-picker-element": "^1.29.1",
+    "emoji-picker-element-data": "^1.8.0"
+  },
+  "devDependencies": {
+    "@sveltejs/vite-plugin-svelte": "^7.3.1",
+    "playwright-core": "^1.64.1",
+    "svelte": "^5.57.2",
+    "svelte-check": "4.7.6",
+    "typescript": "^5.9.3",
+    "vite": "^8.0.5"
+  }
+}

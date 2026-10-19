@@ -1,0 +1,49 @@
+{
+  "$schema": "./theme.schema.json",
+  "format": 1,
+  "id": "sky",
+  "name": "Sky",
+  "order": 2,
+  "light": {
+    "base": "#eaf3fd",
+    "mantle": "#e1edfb",
+    "surface0": "#d2e3f7",
+    "surface1": "#c4d8f0",
+    "text": "#0f2a4d",
+    "subtext": "#34506f",
+    "accent": "#1a56b0",
+    "onAccent": "#ffffff",
+    "red": "#b3261e",
+    "yellow": "#9a6a0c",
+    "background": {
+      "clouds": {
+        "sky": [
+          "#7fb2ec",
+          "#a9cdf5",
+          "#d3e6fb"
+        ]
+      }
+    }
+  },
+  "dark": {
+    "base": "#1c4888",
+    "mantle": "#183e78",
+    "surface0": "#2a5aa3",
+    "surface1": "rgba(255, 255, 255, 0.16)",
+    "text": "#ffffff",
+    "subtext": "#d3e0f5",
+    "accent": "#bcd6ff",
+    "onAccent": "#0f2f66",
+    "red": "#ffb3bd",
+    "yellow": "#ffd98a",
+    "background": {
+      "clouds": {
+        "sky": [
+          "#1f4fa8",
+          "#3a78cf",
+          "#5b93dd"
+        ]
+      }
+    }
+  }
+}

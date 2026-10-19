@@ -5,7 +5,6 @@ on:
     tags: ["v*"]
 
 env:
-  CARGO_TERM_COLOR: always
   APPLE_CERTIFICATE: ${{ secrets.APPLE_CERTIFICATE }}
   APPLE_CERTIFICATE_PASSWORD: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
   APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
@@ -14,24 +13,23 @@ env:
 
 jobs:
   gate:
-    name: fmt + clippy + test
-    runs-on: ubuntu-latest
+    name: lint + test
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Linux webview deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
-            libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev libgl1-mesa-dev
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: actions/setup-go@v5
         with:
-          components: clippy, rustfmt
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo fmt --all -- --check
-      - run: cargo clippy --all-targets -- -D warnings
-      - run: cargo clippy --all-targets --features native -- -D warnings
-      - run: cargo test --locked
-      - run: cargo test --locked --features native
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - uses: extractions/setup-just@v2
+      - name: Chrome for the UI tests
+        run: cd frontend && npm ci && npx playwright-core install chromium
+      - run: just lint
+      - run: just test
 
   build:
     name: release (${{ matrix.os }})
@@ -44,38 +42,48 @@ jobs:
       matrix:
         include:
           - os: macos-latest
-            target: aarch64-apple-darwin
             artifact: GoMessages-macos-aarch64.dmg
           - os: windows-latest
-            target: x86_64-pc-windows-msvc
             artifact: GoMessages-windows-x86_64.zip
-          - os: ubuntu-latest
-            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04
             artifact: GoMessages-linux-x86_64.tar.gz
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
       - name: Linux webview deps
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file \
-            libssl-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-      - run: cargo build --locked --release --bin gomessages
+          sudo apt-get install -y build-essential pkg-config libgtk-4-dev libwebkitgtk-6.0-dev
+      - name: Wails CLI (version from go.mod)
+        run: |
+          version="$(awk '$1 == "github.com/wailsapp/wails/v3" { print $2; exit }' go.mod)"
+          go install "github.com/wailsapp/wails/v3/cmd/wails3@$version"
+      - name: Release notes
+        run: scripts/release-notes.sh "${GITHUB_REF_NAME#v}" > release-notes.md
 
       - name: Package (macOS)
         if: runner.os == 'macOS'
         run: |
-          bash scripts/bundle.sh target/release/gomessages
-          # Ad-hoc sign so Gatekeeper shows a bypassable warning instead of
-          # an unbypassable "damaged" error. Real fix: Developer ID + notarize.
-          codesign --force --deep --sign - dist/GoMessages.app
-          hdiutil create -volname GoMessages \
-            -srcfolder "dist/GoMessages.app" -ov -format UDZO \
-            "dist/${{ matrix.artifact }}"
+          wails3 package
+          mkdir -p dist
+          ditto bin/gomessages.app dist/GoMessages.app
+          # Ad-hoc signed by wails3 package, so Gatekeeper shows a bypassable
+          # warning instead of "damaged". Real fix: Developer ID + notarize.
+          codesign --verify --deep --strict dist/GoMessages.app
+          hdiutil create -volname GoMessages -srcfolder dist/GoMessages.app -ov -format UDZO "dist/${{ matrix.artifact }}"
 
-      # Optional Developer-ID sign + notarize. No-op without secrets (see README).
+      # Optional Developer-ID sign + notarize. No-op without secrets.
       - name: Sign + notarize (macOS)
         if: runner.os == 'macOS' && env.APPLE_CERTIFICATE != ''
         run: |
@@ -85,30 +93,31 @@ jobs:
             -P "$APPLE_CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple: -s -k actions build.keychain
           IDENTITY=$(security find-identity -v -p codesigning build.keychain | grep -o '".*"' | head -n 1 | tr -d '"')
-          codesign --deep --force --sign "$IDENTITY" --options runtime "dist/GoMessages.app"
-          ditto -c -k --keepParent "dist/GoMessages.app" /tmp/GoMessages.zip
+          codesign --deep --force --sign "$IDENTITY" --options runtime dist/GoMessages.app
+          ditto -c -k --keepParent dist/GoMessages.app /tmp/GoMessages.zip
           xcrun notarytool submit /tmp/GoMessages.zip \
             --key <(echo "$APPLE_API_KEY" | base64 --decode) \
             --key-id "$APPLE_API_KEY_ID" --issuer "$APPLE_API_ISSUER" --wait
-          xcrun stapler staple "dist/GoMessages.app"
-          hdiutil create -volname GoMessages \
-            -srcfolder "dist/GoMessages.app" -ov -format UDZO \
-            "dist/${{ matrix.artifact }}"
+          xcrun stapler staple dist/GoMessages.app
+          hdiutil create -volname GoMessages -srcfolder dist/GoMessages.app -ov -format UDZO "dist/${{ matrix.artifact }}"
 
       - name: Package (Windows)
         if: runner.os == 'Windows'
         run: |
-          New-Item -ItemType Directory -Force dist
-          Compress-Archive -Path target/release/gomessages.exe -DestinationPath "dist/${{ matrix.artifact }}"
+          wails3 build
+          mkdir -p dist
+          cp bin/gomessages.exe dist/GoMessages.exe
+          pwsh -Command "Compress-Archive -Path dist/GoMessages.exe -DestinationPath 'dist/${{ matrix.artifact }}'"
 
       - name: Package (Linux)
         if: runner.os == 'Linux'
         run: |
+          wails3 build
           mkdir -p dist
-          tar -czf "dist/${{ matrix.artifact }}" -C target/release gomessages
+          tar -czf "dist/${{ matrix.artifact }}" -C bin gomessages
 
       - name: Upload
         uses: softprops/action-gh-release@v2
         with:
           files: dist/${{ matrix.artifact }}
-          generate_release_notes: true
+          body_path: release-notes.md

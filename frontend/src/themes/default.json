@@ -1,0 +1,41 @@
+{
+  "$schema": "./theme.schema.json",
+  "format": 1,
+  "id": "default",
+  "name": "Default",
+  "order": 0,
+  "light": {
+    "base": "#ffffff",
+    "mantle": "#f3f6fc",
+    "surface0": "#f0f2f5",
+    "surface1": "#e1e3e1",
+    "text": "#1f1f1f",
+    "subtext": "#5f6368",
+    "accent": "#0b57d0",
+    "onAccent": "#ffffff",
+    "red": "#b3261e",
+    "yellow": "#f9d860",
+    "hover": "#e6ecf6",
+    "selected": "#d3e3fd",
+    "bubbleOut": "#d3e3fd",
+    "onBubbleOut": "#041e49",
+    "warn": "#fef7e0"
+  },
+  "dark": {
+    "base": "#131314",
+    "mantle": "#1b1b1d",
+    "surface0": "#2a2b2e",
+    "surface1": "#2e3033",
+    "text": "#e3e3e3",
+    "subtext": "#9aa0a6",
+    "accent": "#a8c7fa",
+    "onAccent": "#062e6f",
+    "red": "#f28b82",
+    "yellow": "#f2c94c",
+    "hover": "#282a2d",
+    "selected": "#004a77",
+    "bubbleOut": "#004a77",
+    "onBubbleOut": "#d3e3fd",
+    "warn": "#423710"
+  }
+}

@@ -1,18 +1,27 @@
 ---
 title: For developers
-description: Where to start in the GoMessages codebase.
+description: Build GoMessages and find your way around the code.
 ---
 
-New here? Ten minutes, then build:
+GoMessages is a Go backend built on
+[libgm](https://github.com/mautrix/gmessages) and a Svelte UI, in one
+[Wails](https://v3.wails.io) app. It's open source under the AGPL-3.0.
 
-1. [Architecture](/GoMessages/architecture/) — what the app is and why it is built this way.
-2. [Codebase map](/GoMessages/codebase/) — setup, build, test, and where everything lives.
-3. [Contributing](/GoMessages/contributing/) — how to land a change.
+The developer documentation lives with the code, in
+[`docs/`](https://github.com/jbouhier/GoMessages/tree/main/docs):
 
-The fast loop, once set up:
+- [Getting set up](https://github.com/jbouhier/GoMessages/blob/main/docs/README.md):
+  requirements and commands
+- [Architecture](https://github.com/jbouhier/GoMessages/blob/main/docs/ARCHITECTURE.md)
+- [Codebase map](https://github.com/jbouhier/GoMessages/blob/main/docs/CODEBASE.md)
+- [Contributing](https://github.com/jbouhier/GoMessages/blob/main/docs/CONTRIBUTING.md)
+- [Releasing](https://github.com/jbouhier/GoMessages/blob/main/docs/RELEASING.md)
+- [Theming](https://github.com/jbouhier/GoMessages/blob/main/docs/THEMING.md)
+
+The fast loop:
 
 ```sh
-just lint   # fmt + clippy + tests
-just build  # release binary
-just run    # debug build
+just demo   # run on sample data, no phone needed
+just lint
+just test
 ```

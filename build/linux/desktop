@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=GoMessages
+Comment=Google Messages desktop client
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/gomessages %u
+Terminal=false
+Type=Application
+Icon=gomessages
+Categories=Utility;
+StartupWMClass=gomessages
+
+ 

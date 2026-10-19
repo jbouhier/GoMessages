@@ -1,0 +1,58 @@
+{
+  "$schema": "./theme.schema.json",
+  "format": 1,
+  "id": "peach",
+  "name": "Peach",
+  "order": 5,
+  "credit": "After notacat.co",
+  "light": {
+    "base": "#fcf3ee",
+    "mantle": "#f8e8e0",
+    "surface0": "#f1d9ce",
+    "surface1": "#e7c5b6",
+    "text": "#2b2622",
+    "subtext": "#4f423c",
+    "accent": "#8f3820",
+    "onAccent": "#ffffff",
+    "red": "#b3261e",
+    "yellow": "#a8740f",
+    "background": {
+      "mesh": {
+        "colors": [
+          "#f9e6df",
+          "#f4c7b6",
+          "#f0ab9e",
+          "#f8dcc6"
+        ],
+        "distortion": 0.85,
+        "swirl": 0.45,
+        "frame": 23000
+      }
+    }
+  },
+  "dark": {
+    "base": "#241a17",
+    "mantle": "#1c1412",
+    "surface0": "#35271f",
+    "surface1": "#4a352c",
+    "text": "#f6e7e0",
+    "subtext": "#cfb5aa",
+    "accent": "#f0a58d",
+    "onAccent": "#2a130b",
+    "red": "#ff9c91",
+    "yellow": "#f0c477",
+    "background": {
+      "mesh": {
+        "colors": [
+          "#1f1411",
+          "#5a2f24",
+          "#7a3b2c",
+          "#2e1c17"
+        ],
+        "distortion": 0.85,
+        "swirl": 0.45,
+        "frame": 23000
+      }
+    }
+  }
+}

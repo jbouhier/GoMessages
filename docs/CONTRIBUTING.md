@@ -1,25 +1,29 @@
 # Contributing
 
-1. Fork, branch, open a PR against `main`. Commands for the loop live in
-   [README](README.md); the map in [CODEBASE](CODEBASE.md).
-2. CI must stay green: fmt, clippy, tests, and debug builds on macOS,
-   Windows, and Linux.
-3. Touching user-visible behavior? Update the matching docs page under
-   `site/src/content/docs/` in the same PR.
-4. Keep the app thin: the page owns chat, the binary owns the frame.
+1. Fork, branch, and open a pull request against `main`. The commands are in
+   [README](README.md), the file map in [CODEBASE](CODEBASE.md).
+2. CI must stay green: `just lint` and `just test` on macOS, plus builds and
+   Go tests on Windows and Linux.
+3. Changing something people see? Update the matching page in
+   `site/src/content/docs/` and add a line to the `Unreleased` section of
+   `CHANGELOG.md` in the same pull request (create the section if needed).
+4. Changing a screen? Attach before and after shots from `just tour`.
 
 ## Tests
 
-`just lint` runs everything: fmt, clippy, Rust tests, JS tests.
+`just test` runs all of them:
 
-- **Rust unit tests** sit next to the code (`#[cfg(test)]`). Logic that
-  decides something (alert plan, IPC allowlist, prefs parsing) lives in pure
-  functions so it can be tested without windows.
-- **JS tests** (`tests/js/`, Node built-in runner, no deps) run the exact
-  `INIT_JS` and settings script strings from the Rust sources inside a fake
-  browser (`harness.mjs`). Needs Node 20+.
-- **Contract fixture** `tests/fixtures/notify_payloads.json`: the JS tests
-  assert what the page shim posts, the Rust tests assert `parse_notify` reads
-  it. Change one side, the other fails.
-- New behavior: cover the happy path, the default failure, and known edge
-  cases.
+- **Go tests** (`*_test.go`): settings parsing and migration, model
+  conversion. Decisions live in plain functions so they can be tested
+  without a window or a phone.
+- **UI unit tests** (`frontend/test/`): pure TypeScript, Node's test runner.
+- **UI tests** (`frontend/e2e/ui.test.mjs`): the real Go backend on demo
+  data, served over HTTP, driven in headless Chrome. They cover layout at
+  every size and zoom, keyboard use, and WCAG AA contrast for every theme.
+
+Sign-in can't run in CI because it needs a Google account and a phone. When
+you change `service.go`'s sign-in or a `webviewauth_*.go` file, pair a real
+phone on each platform you touched, and say which ones in the pull request.
+
+New behavior: cover the normal case, the failure people will hit first, and
+known edge cases.

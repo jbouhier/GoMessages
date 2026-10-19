@@ -1,0 +1,32 @@
+{
+  "$schema": "./theme.schema.json",
+  "format": 1,
+  "id": "mauve",
+  "name": "Mauve",
+  "order": 3,
+  "credit": "Catppuccin Latte and Mocha (MIT); Latte's brighter base from zed-catppuccin-blur (MIT)",
+  "light": {
+    "base": "#f9fafc",
+    "mantle": "#eff1f5",
+    "surface0": "#dce0e8",
+    "surface1": "#ccd0da",
+    "text": "#4c4f69",
+    "subtext": "#5c5f77",
+    "accent": "#8839ef",
+    "onAccent": "#ffffff",
+    "red": "#d20f39",
+    "yellow": "#df8e1d"
+  },
+  "dark": {
+    "base": "#1e1e2e",
+    "mantle": "#181825",
+    "surface0": "#313244",
+    "surface1": "#45475a",
+    "text": "#cdd6f4",
+    "subtext": "#a6adc8",
+    "accent": "#cba6f7",
+    "onAccent": "#11111b",
+    "red": "#f38ba8",
+    "yellow": "#f9e2af"
+  }
+}

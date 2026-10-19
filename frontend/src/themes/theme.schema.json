@@ -1,0 +1,193 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "GoMessages theme",
+  "type": "object",
+  "required": [
+    "format",
+    "id",
+    "name"
+  ],
+  "properties": {
+    "format": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "name": {
+      "type": "string"
+    },
+    "order": {
+      "type": "number",
+      "description": "Position among the built-in themes."
+    },
+    "credit": {
+      "type": "string"
+    },
+    "light": {
+      "$ref": "#/$defs/palette"
+    },
+    "dark": {
+      "$ref": "#/$defs/palette"
+    }
+  },
+  "anyOf": [
+    {
+      "required": [
+        "light"
+      ]
+    },
+    {
+      "required": [
+        "dark"
+      ]
+    }
+  ],
+  "$defs": {
+    "hex": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "color": {
+      "type": "string",
+      "pattern": "^(#[0-9a-fA-F]{6}|rgba\\(\\s*\\d{1,3},\\s*\\d{1,3},\\s*\\d{1,3},\\s*(0|1|0?\\.\\d+)\\s*\\))$"
+    },
+    "palette": {
+      "type": "object",
+      "required": [
+        "base",
+        "mantle",
+        "surface0",
+        "surface1",
+        "text",
+        "subtext",
+        "accent",
+        "onAccent",
+        "red",
+        "yellow"
+      ],
+      "properties": {
+        "base": {
+          "$ref": "#/$defs/hex",
+          "description": "Conversation background."
+        },
+        "mantle": {
+          "$ref": "#/$defs/hex",
+          "description": "Conversation list."
+        },
+        "surface0": {
+          "$ref": "#/$defs/hex",
+          "description": "Incoming bubbles, the message box, hovered rows."
+        },
+        "surface1": {
+          "$ref": "#/$defs/color",
+          "description": "Dividers."
+        },
+        "text": {
+          "$ref": "#/$defs/hex"
+        },
+        "subtext": {
+          "$ref": "#/$defs/hex"
+        },
+        "accent": {
+          "$ref": "#/$defs/hex",
+          "description": "Buttons, links, the selected chat and your bubbles are tinted from it."
+        },
+        "onAccent": {
+          "$ref": "#/$defs/hex",
+          "description": "Text on the accent."
+        },
+        "red": {
+          "$ref": "#/$defs/hex"
+        },
+        "yellow": {
+          "$ref": "#/$defs/hex"
+        },
+        "hover": {
+          "$ref": "#/$defs/hex",
+          "description": "Optional: hovered rows (default: surface0)."
+        },
+        "selected": {
+          "$ref": "#/$defs/hex",
+          "description": "Optional: the selected chat (default: accent tinted into mantle)."
+        },
+        "bubbleOut": {
+          "$ref": "#/$defs/hex",
+          "description": "Optional: your bubbles (default: accent tinted into base)."
+        },
+        "onBubbleOut": {
+          "$ref": "#/$defs/hex",
+          "description": "Optional: text on your bubbles (default: text)."
+        },
+        "warn": {
+          "$ref": "#/$defs/hex",
+          "description": "Optional: warning banners (default: yellow tinted into base)."
+        },
+        "background": {
+          "description": "Optional art under the panes.",
+          "oneOf": [
+            {
+              "type": "object",
+              "required": [
+                "mesh"
+              ],
+              "properties": {
+                "mesh": {
+                  "type": "object",
+                  "required": [
+                    "colors"
+                  ],
+                  "properties": {
+                    "colors": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/hex"
+                      },
+                      "minItems": 2,
+                      "maxItems": 6
+                    },
+                    "distortion": {
+                      "type": "number"
+                    },
+                    "swirl": {
+                      "type": "number"
+                    },
+                    "frame": {
+                      "type": "number"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "type": "object",
+              "required": [
+                "clouds"
+              ],
+              "properties": {
+                "clouds": {
+                  "type": "object",
+                  "required": [
+                    "sky"
+                  ],
+                  "properties": {
+                    "sky": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/$defs/hex"
+                      },
+                      "minItems": 3,
+                      "maxItems": 3
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

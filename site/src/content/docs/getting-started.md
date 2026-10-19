@@ -3,35 +3,35 @@ title: Getting started
 description: Install GoMessages and pair your phone.
 ---
 
-1. Download the build for your system from the
-   [downloads page](/GoMessages/downloads/) (or the
-   [releases page](https://github.com/jbouhier/GoMessages/releases)).
-2. Mac: copy `GoMessages.app` to `/Applications`. Windows: unzip and run the
-   `.exe`. Linux: unpack and run the binary.
-3. Sign in with Google, then tap the matching emoji on your phone.
+1. [Download](/GoMessages/downloads/) the file for your computer.
+2. Install it:
+   - **Mac**: open the `.dmg` and drag GoMessages to Applications. The first
+     time, right-click the app, choose **Open**, then **Open**.
+   - **Windows**: unzip and run `GoMessages.exe`.
+   - **Linux**: unpack and run `gomessages`.
+3. Choose **Sign in with Google** and tap the matching emoji on your phone.
+   See [pairing](/GoMessages/pairing/).
 
 That's it, the app stays signed in.
 
-Closing the window keeps GoMessages running so messages keep arriving.
-Reopen it from the Dock (Mac) or the tray icon, quit with `Cmd+Q` (`Ctrl+Q`
-elsewhere). Change this in [Settings](/GoMessages/settings/).
+Want to look around first? Run the app with `--demo` to see it with sample
+conversations, no phone needed.
+
+## Windows requirements
+
+Windows 10 or 11. The app uses Microsoft Edge WebView2, which comes with
+Windows.
 
 ## Linux requirements
 
-The app uses your system's web engine. On Debian/Ubuntu:
+GTK 4 and WebKitGTK 6.0: Ubuntu 24.04, Debian 13, Fedora 39, or newer. On
+Ubuntu or Debian:
 
 ```sh
-sudo apt install libwebkit2gtk-4.1-0
-# optional, for the tray icon:
-sudo apt install libayatana-appindicator3-1
+sudo apt install libgtk-4-1 libwebkitgtk-6.0-4
 ```
 
-Run it in an X11 session. Wayland sessions aren't supported yet.
+## Updating from 0.3 or earlier
 
-## Build from source
-
-```sh
-cargo build --release --bin gomessages
-bash scripts/bundle.sh target/release/gomessages
-# → dist/GoMessages.app
-```
+GoMessages 0.4 is a new app, so you need to pair once more after updating.
+See [what's new](/GoMessages/whats-new/).

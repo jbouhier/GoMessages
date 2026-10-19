@@ -1,0 +1,58 @@
+{
+  "$schema": "./theme.schema.json",
+  "format": 1,
+  "id": "sage",
+  "name": "Sage",
+  "order": 7,
+  "credit": "After jbouhier.com",
+  "light": {
+    "base": "#eef3f1",
+    "mantle": "#e4ece9",
+    "surface0": "#d7e2de",
+    "surface1": "#c3d2cc",
+    "text": "#2c3232",
+    "subtext": "#3f4a48",
+    "accent": "#255a4c",
+    "onAccent": "#ffffff",
+    "red": "#b3261e",
+    "yellow": "#b5821a",
+    "background": {
+      "mesh": {
+        "colors": [
+          "#e6eeeb",
+          "#b9c9c4",
+          "#9db7ae",
+          "#dbe6e2"
+        ],
+        "distortion": 0.8,
+        "swirl": 0.35,
+        "frame": 41000
+      }
+    }
+  },
+  "dark": {
+    "base": "#18201e",
+    "mantle": "#131a18",
+    "surface0": "#25302d",
+    "surface1": "#34433f",
+    "text": "#e3ebe8",
+    "subtext": "#a9bab4",
+    "accent": "#8fc7b5",
+    "onAccent": "#0f1a17",
+    "red": "#f2a29b",
+    "yellow": "#e8c77f",
+    "background": {
+      "mesh": {
+        "colors": [
+          "#0f1715",
+          "#1f3a33",
+          "#2d5248",
+          "#132320"
+        ],
+        "distortion": 0.8,
+        "swirl": 0.35,
+        "frame": 41000
+      }
+    }
+  }
+}

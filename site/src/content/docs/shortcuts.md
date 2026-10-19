@@ -3,25 +3,42 @@ title: Shortcuts
 description: Keyboard shortcuts in GoMessages.
 ---
 
-| Action       | Shortcut |
-| ------------ | -------- |
-| Settings     | `Cmd+,`  |
-| Zoom in      | `Cmd+=`  |
-| Zoom out     | `Cmd+-`  |
-| Reset zoom   | `Cmd+0`  |
-| Close window | `Cmd+W`  |
-| Quit         | `Cmd+Q`  |
+Press `Cmd+/` in the app to see them all. On Windows and Linux, use `Ctrl`
+where Mac uses `Cmd`, and `Alt` for `Option`.
 
-On Windows and Linux, use `Ctrl` where Mac uses `Cmd`.
+## Get around
 
-Zoom shortcuts are also in the **View** menu on Mac, and work on AZERTY and
-other layouts. The zoom level persists across restarts.
+| Action | Shortcut |
+| --- | --- |
+| New chat | `Cmd+N` |
+| Switch to a conversation | `Cmd+K` |
+| Search conversations | `Cmd+F` |
+| Next / previous conversation | `Option+↓` / `Option+↑` |
+| Next / previous unread | `Option+Shift+↓` / `Option+Shift+↑` |
+| Conversation 1 to 9 | `Cmd+1` … `Cmd+9` |
+| Show or hide the conversation list | `Cmd+B` |
+| Photos-only list | `Cmd+Shift+\` |
+| Refresh conversations | `Cmd+R` |
 
-Closing the window hides it; the app keeps running. Reopen from the Dock
-(Mac) or the tray icon. Turn this off in [Settings](/GoMessages/settings/).
+## Read and write
 
-## Tray icon
+| Action | Shortcut |
+| --- | --- |
+| Send | `Enter` (`Shift+Enter` for a new line) |
+| Attach a file | `Cmd+O` |
+| Scroll the conversation | `Page Up` / `Page Down` |
+| Oldest loaded / newest message | `Home` / `End` |
+| Back to the message box, or drop a reply | `Esc` |
 
-- **Mac**: click the menu bar icon for Open, Settings…, Quit.
-- **Windows**: left click shows or hides the window, right click opens the menu.
-- **Linux**: click the icon for the menu.
+## App
+
+| Action | Shortcut |
+| --- | --- |
+| Settings | `Cmd+,` |
+| Text size bigger / smaller / reset | `Cmd+=` / `Cmd+-` / `Cmd+0` |
+| All shortcuts | `Cmd+/` |
+| Quit | `Cmd+Q` |
+
+Menus, pickers, and confirmations work from the keyboard: arrows or `Tab`
+to move, `Enter` or `Space` to choose, `Esc` to close. A confirmation for
+something that can't be undone starts on **Cancel**.
