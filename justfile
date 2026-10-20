@@ -11,7 +11,7 @@ build: ui
 
 # Build the UI into frontend/dist
 ui:
-    cd frontend && npm install --silent && npx vite build --mode production
+    cd frontend && bun install --silent && bun run build
 
 # Run on your account
 run: build
@@ -44,11 +44,11 @@ install:
 # Go tests, UI unit tests, then the UI tests in headless Chrome against the demo backend
 test: build unit
     go test ./...
-    cd frontend && node --test e2e/*.test.mjs
+    cd frontend && bun test --timeout 60000 ./e2e
 
 # UI unit tests (pure TS, no browser)
 unit:
-    cd frontend && node --test --experimental-strip-types test/*.test.ts
+    cd frontend && bun test ./test
 
 # Screenshots of every screen into DIR (light or dark)
 tour dir scheme="light" theme="": build
@@ -57,13 +57,13 @@ tour dir scheme="light" theme="": build
     ./bin/gomessages --demo --serve 127.0.0.1:9250 >/dev/null 2>&1 &
     trap "kill $!" EXIT
     sleep 1
-    cd frontend && node e2e/tour.mjs "{{dir}}" {{scheme}} {{theme}}
+    cd frontend && bun e2e/tour.mjs "{{dir}}" {{scheme}} {{theme}}
 
 # gofmt, go vet, and svelte-check
 lint: ui
     test -z "$(gofmt -l .)"
     go vet ./...
-    cd frontend && npx svelte-check --threshold error
+    cd frontend && bunx svelte-check --threshold error
 
 # The Wails CLI matching go.mod, in bin/tools
 tools:

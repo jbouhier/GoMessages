@@ -16,18 +16,16 @@ jobs:
     name: lint + test
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-      - uses: extractions/setup-just@v2
+          bun-version-file: frontend/package.json
+      - uses: extractions/setup-just@v4
       - name: Chrome for the UI tests
-        run: cd frontend && npm ci && npx playwright-core install chromium
+        run: cd frontend && bun install --frozen-lockfile && bunx playwright-core install chromium
       - run: just lint
       - run: just test
 
@@ -51,15 +49,13 @@ jobs:
       run:
         shell: bash
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
-      - uses: actions/setup-node@v4
+      - uses: oven-sh/setup-bun@v2
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          bun-version-file: frontend/package.json
       - name: Linux webview deps
         if: runner.os == 'Linux'
         run: |
@@ -117,7 +113,7 @@ jobs:
           tar -czf "dist/${{ matrix.artifact }}" -C bin gomessages
 
       - name: Upload
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: dist/${{ matrix.artifact }}
           body_path: release-notes.md

@@ -1,6 +1,5 @@
 // Unit tests for matching sends to the phone's echo. Run with
-// `just unit`, or from frontend/:
-// `node --test --experimental-strip-types test/*.test.ts` (Node 22.6+).
+// `just unit`, or `bun test ./test` from frontend/.
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { findMessage, isPending, newTmpID, upsertMessage } from "../src/lib/messages.ts";

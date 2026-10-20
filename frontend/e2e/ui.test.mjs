@@ -1,6 +1,6 @@
 // The UI against the real Go backend on demo data, in headless Chrome. The
-// same cases as gogo-messages' ui_tests.rs. Run with `just e2e` (it builds
-// bin/gomessages first) or `node --test e2e/` from frontend/.
+// same cases as gogo-messages' ui_tests.rs. Run with `just test` (it builds
+// bin/gomessages first) or `bun test --timeout 60000 ./e2e` from frontend/.
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
