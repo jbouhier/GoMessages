@@ -1,0 +1,243 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #f3f1fb; }
+  body { font-family: "Inter", sans-serif; color: #0d0f14; -webkit-font-smoothing: antialiased; }
+  #bg { position: absolute; inset: 0; }
+  .layer { position: absolute; inset: 0; }
+  #caption { position: absolute; left: 0; right: 0; top: 64px; text-align: center; }
+  #caption .title { font-family: "Inter Display", "Inter"; font-weight: 700; font-size: 66px; letter-spacing: -0.035em; line-height: 1.05; display: inline-flex; align-items: center; gap: 0; }
+  #caption .sub { margin-top: 14px; font-size: 28px; font-weight: 500; color: #555b6e; letter-spacing: -0.01em; height: 36px; }
+  .w { display: inline-block; white-space: pre; will-change: transform, opacity, filter; }
+  .keys { display: inline-flex; gap: 10px; margin-left: 26px; vertical-align: middle; }
+  .key { display: inline-flex; align-items: center; justify-content: center; min-width: 72px; height: 72px; padding: 0 16px; border-radius: 16px;
+    background: linear-gradient(#ffffff, #eef0f6); border: 1.5px solid #d5d9e6; box-shadow: 0 5px 0 #c9cede, 0 10px 22px rgba(30,40,90,.16);
+    font-family: "Inter"; font-weight: 600; font-size: 34px; color: #1b1f2a; letter-spacing: 0; }
+  #win { position: absolute; left: 310px; top: 222px; transform-origin: 50% 40%; width: 1300px; height: 851px; }
+  #frame { width: 1300px; height: 851px; border-radius: 20px; overflow: hidden; background: #fff; position: relative;
+    box-shadow: 0 0 0 1.5px rgba(20,25,60,.10), 0 40px 90px rgba(35,40,110,.22), 0 12px 30px rgba(35,40,110,.12); }
+  #tbar { height: 38px; display: flex; align-items: center; gap: 9px; padding-left: 17px; position: relative; background: #f4f5fa; border-bottom: 1px solid rgba(0,0,0,.06); transition: none; }
+  #tbar i { width: 13px; height: 13px; border-radius: 50%; display: block; }
+  #tbar .t { position: absolute; left: 0; right: 0; text-align: center; font-size: 14.5px; line-height: 38px; top: 0; font-weight: 600; color: #454a58; pointer-events: none; }
+  #content { position: absolute; left: 0; top: 38px; width: 1300px; height: 813px; overflow: hidden; }
+  #shot { display: block; width: 1920px; height: 1200px; position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+  .big { font-family: "Inter Display", "Inter"; font-weight: 700; font-size: 112px; letter-spacing: -0.045em; line-height: 1; }
+  .mid { font-size: 38px; font-weight: 500; color: #4b5164; letter-spacing: -0.015em; line-height: 1.3; }
+  .brand { display: flex; align-items: center; gap: 34px; }
+  .brand img { width: 150px; height: 150px; }
+  .pill { display: inline-flex; align-items: center; gap: 14px; padding: 16px 30px; border-radius: 999px; background: #0d0f14; color: #fff; font-size: 30px; font-weight: 600; letter-spacing: -0.01em; }
+  .fine { font-size: 21px; color: #8a8fa0; font-weight: 500; }
+  .plats { display: flex; gap: 18px; }
+  .plat { padding: 12px 26px; border-radius: 999px; background: rgba(255,255,255,.75); border: 1.5px solid rgba(30,40,90,.10); font-size: 30px; font-weight: 600; color: #1b1f2a; box-shadow: 0 6px 18px rgba(35,40,110,.08); }
+</style></head>
+<body>
+<div id="bg"></div>
+<div id="win"><div id="frame"><div id="tbar"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i><span class="t">GoMessages</span></div><div id="content"><img id="shot"></div></div></div>
+<div id="caption"><div class="title"></div><div class="sub"></div></div>
+
+<div class="layer" id="intro">
+  <div class="center">
+    <div class="brand"><img src="../../../build/appicon.png" id="i-icon"><div class="big" id="i-word"></div></div>
+    <div class="mid" id="i-tag" style="margin-top:40px"></div>
+  </div>
+</div>
+<div class="layer" id="privacy">
+  <div class="center">
+    <svg id="p-lock" width="120" height="120" viewBox="0 0 24 24" fill="none" stroke="#1a56db" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom:40px">
+      <rect x="4.5" y="10.5" width="15" height="10.5" rx="2.5" fill="#e7eeff"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.3" fill="#1a56db" stroke="none"/></svg>
+    <div class="big" id="p-big"></div>
+    <div class="mid" id="p-sub" style="margin-top:34px; max-width:1300px"></div>
+  </div>
+</div>
+<div class="layer" id="end">
+  <div class="center">
+    <div class="brand"><img src="../../../build/appicon.png" id="e-icon"><div class="big" id="e-word"></div></div>
+    <div class="plats" id="e-plats" style="margin-top:52px"><span class="plat">Mac</span><span class="plat">Windows</span><span class="plat">Linux</span></div>
+    <div class="mid" id="e-free" style="margin-top:44px"></div>
+    <div id="e-url" style="margin-top:30px"><span class="pill"><svg width="30" height="30" viewBox="0 0 24 24" fill="#fff"><path d="M12 .5a11.5 11.5 0 0 0-3.64 22.41c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.52-1.33-1.28-1.69-1.28-1.69-1.04-.71.08-.7.08-.7 1.16.08 1.77 1.19 1.77 1.19 1.03 1.76 2.7 1.25 3.36.96.1-.75.4-1.25.73-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.25.45-2.28 1.19-3.08-.12-.29-.52-1.46.11-3.04 0 0 .97-.31 3.17 1.18a11 11 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.63 1.58.23 2.75.11 3.04.74.8 1.19 1.83 1.19 3.08 0 4.41-2.69 5.38-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.5 11.5 0 0 0 12 .5Z"/></svg>github.com/jbouhier/GoMessages</span></div>
+    <div class="fine" id="e-fine" style="position:absolute; bottom:46px">Unofficial project. Not affiliated with Google.</div>
+  </div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, k) => a + (b - a) * k;
+const inOut = (k) => (k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+const outExpo = (k) => (k >= 1 ? 1 : 1 - Math.pow(2, -10 * k));
+const outBack = (k) => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(k - 1, 3) + c1 * Math.pow(k - 1, 2); };
+const prog = (t, a, b) => clamp((t - a) / (b - a));
+
+// Clip index, filled by the renderer.
+window.CLIPS = {};
+
+// UI scenes on the global timeline. off: where in the recording the scene starts.
+const SCENES = [
+  { id: "send", a: 2.8, b: 9.6, off: 0, title: "Your texts, on your desktop.", sub: "Google Messages in a real app, synced with your phone." },
+  { id: "switcher", a: 9.6, b: 13.2, off: 0, title: "Jump to anyone.", keys: ["⌘", "K"], press: 0.7, sub: "Type a few letters, hit Enter." },
+  { id: "photos", a: 13.2, b: 17.2, off: 0, title: "Photos open full size.", sub: "Zoom, copy, save, or flip through with the arrow keys." },
+  { id: "react", a: 17.2, b: 21.2, off: 0, title: "React and reply in a click.", sub: "Hover any message." },
+  { id: "shortcuts", a: 21.2, b: 24.0, off: 0, title: "Every action has a shortcut.", keys: ["⌘", "/"], press: 0.25, sub: "Mouse optional." },
+  { id: "themes", a: 24.0, b: 30.0, off: 0, title: "Eight themes. Light and dark.", sub: "", themes: true },
+];
+const THEMES = ["Default · Dark", "Graphite · Light", "Sky · Dark", "Mauve · Light", "Aurora · Dark", "Peach · Light", "Amber · Dark", "Sage · Light", "Aurora · Dark"];
+
+// Camera keyframes: point (cx, cy) of the clip lands at screen (960, 650) at scale s.
+const FULL = [960, 600, 1];
+const CAM = [
+  [2.8, ...FULL], [3.9, ...FULL], [4.7, 1400, 1010, 1.8], [6.0, 1400, 1010, 1.8], [6.8, 1300, 840, 1.5], [9.3, 1300, 840, 1.5],
+  [10.1, 965, 330, 1.55], [12.0, 965, 330, 1.55], [12.7, ...FULL],
+  [13.2, ...FULL], [17.2, 960, 600, 1.05],
+  [17.5, ...FULL], [18.3, 860, 520, 1.9], [20.6, 860, 520, 1.9], [21.3, ...FULL],
+  [24.0, 960, 600, 1.08], [24.01, ...FULL], [30, 960, 600, 1.06],
+];
+function camAt(t) {
+  if (t <= CAM[0][0]) return CAM[0].slice(1);
+  for (let i = 0; i < CAM.length - 1; i++) {
+    const [t0, ...a] = CAM[i], [t1, ...b] = CAM[i + 1];
+    if (t <= t1) { const k = inOut(prog(t, t0, t1)); return a.map((v, j) => lerp(v, b[j], k)); }
+  }
+  return CAM.at(-1).slice(1);
+}
+
+function frameFor(id, tc) {
+  const c = CLIPS[id]; let lo = 0, hi = c.length - 1;
+  while (lo < hi) { const m = (lo + hi + 1) >> 1; if (c[m].t <= tc) lo = m; else hi = m - 1; }
+  return `.work/clips/${id}/${String(c[lo].i).padStart(5, "0")}.jpg`;
+}
+
+// Word-by-word entrance: each word rises and sharpens.
+function words(el, text, t, start, stagger = 0.06, dur = 0.55, exit = null) {
+  if (el.dataset.text !== text) {
+    el.dataset.text = text;
+    el.innerHTML = text.split(/(\s+)/).map((w) => (w.trim() ? `<span class="w">${w}</span>` : w)).join("");
+  }
+  [...el.querySelectorAll(".w")].forEach((s, i) => {
+    let k = outExpo(prog(t, start + i * stagger, start + i * stagger + dur));
+    let y = (1 - k) * 46, o = k, bl = (1 - k) * 10;
+    if (exit !== null) { const e = inOut(prog(t, exit, exit + 0.32)); y -= e * 30; o *= 1 - e; bl += e * 8; }
+    s.style.transform = `translateY(${y}px)`; s.style.opacity = o; s.style.filter = `blur(${bl}px)`;
+  });
+}
+
+let lastSrc = "";
+async function render(t) {
+  // Background: soft pastel field with drifting light.
+  const a = t * 0.18;
+  $("#bg").style.background = `
+    radial-gradient(900px 700px at ${30 + 8 * Math.sin(a)}% ${18 + 6 * Math.cos(a * 1.3)}%, rgba(185,198,255,.85), transparent 70%),
+    radial-gradient(1000px 800px at ${78 + 6 * Math.cos(a * .9)}% ${82 + 5 * Math.sin(a)}%, rgba(255,214,196,.9), transparent 70%),
+    radial-gradient(700px 600px at ${85 + 5 * Math.sin(a * 1.7)}% ${12 + 5 * Math.cos(a)}%, rgba(231,210,255,.8), transparent 70%),
+    linear-gradient(135deg, #eef0fd, #fbf1ec)`;
+
+  // Intro.
+  const intro = $("#intro");
+  const io = 1 - inOut(prog(t, 2.35, 2.75));
+  intro.style.opacity = io; intro.style.transform = `translateY(${-(1 - io) * 60}px) scale(${1 - (1 - io) * 0.04})`;
+  if (io > 0) {
+    const ik = outBack(clamp(prog(t, 0.05, 0.65)));
+    $("#i-icon").style.transform = `scale(${Math.max(0, ik)}) rotate(${(1 - clamp(ik)) * -14}deg)`;
+    $("#i-icon").style.opacity = clamp(prog(t, 0.05, 0.3));
+    words($("#i-word"), "GoMessages", t, 0.45, 0, 0.6);
+    words($("#i-tag"), "Google Messages for Mac, Windows, and Linux.", t, 0.95, 0.045, 0.5);
+  }
+
+  // Window.
+  const win = $("#win");
+  const enter = outExpo(prog(t, 2.55, 3.45));
+  const leave = inOut(prog(t, 29.85, 30.45));
+  const vis = enter * (1 - leave);
+  win.style.display = vis > 0.001 ? "block" : "none";
+  if (vis > 0.001) {
+    const [cx, cy, z] = camAt(t);
+    const k = (1300 / 1920) * z;
+    const tx = clamp(650 - cx * k, 1300 - 1920 * k, 0), ty = clamp(406.5 - cy * k, 813 - 1200 * k, 0);
+    $("#shot").style.transform = `translate(${tx}px, ${ty}px) scale(${k})`;
+    const lift = (1 - enter) * 360 + leave * 200, sc = 1 - (1 - enter) * 0.1 - leave * 0.08;
+    win.style.transform = `translateY(${lift}px) perspective(2400px) rotateX(${(1 - enter) * 14}deg) scale(${sc})`;
+    win.style.opacity = clamp(vis * 1.4);
+    win.style.filter = leave > 0 ? `blur(${leave * 12}px)` : "none";
+    // Pick the clip frame.
+    let sc0 = SCENES.find((x) => t >= x.a && t < x.b) ?? (t < SCENES[0].a ? SCENES[0] : SCENES.at(-1));
+    const tc = clamp(t - sc0.a, 0, 99) + sc0.off;
+    const src = frameFor(sc0.id, tc);
+    const dark = sc0.id === "themes" && tc > 0.3 && !/Light/.test(THEMES[clamp(Math.floor((tc - 0.25) / 0.62), 0, 8)]);
+    $("#tbar").style.background = dark ? "#1b1d2b" : "#f4f5fa";
+    $("#tbar .t").style.color = dark ? "#c9cbe0" : "#454a58";
+    if (src !== lastSrc) { const img = $("#shot"); img.src = src; await img.decode().catch(() => {}); lastSrc = src; }
+  }
+
+  // Captions.
+  const cap = $("#caption"), sc = SCENES.find((x) => t >= x.a - 0.05 && t < x.b);
+  cap.style.display = sc ? "block" : "none";
+  if (sc) {
+    const start = sc.a + (sc === SCENES[0] ? 0.55 : 0.08), exit = sc.b - 0.36;
+    const title = cap.querySelector(".title");
+    if (title.dataset.scene !== sc.id) {
+      title.dataset.scene = sc.id;
+      title.innerHTML = `<span class="tt"></span>` + (sc.keys ? `<span class="keys">${sc.keys.map((k) => `<span class="key">${k}</span>`).join("")}</span>` : "");
+    }
+    words(title.querySelector(".tt"), sc.title, t, start, 0.055, 0.55, exit);
+    if (sc.keys) {
+      [...title.querySelectorAll(".key")].forEach((k, i) => {
+        const ka = start + 0.25 + i * 0.07;
+        let e = outBack(clamp(prog(t, ka, ka + 0.5)));
+        const x = inOut(prog(t, exit, exit + 0.32));
+        // Key press when the action fires in the recording.
+        const pt = sc.a + sc.press - 0.12, pk = prog(t, pt, pt + 0.09) - prog(t, pt + 0.16, pt + 0.32);
+        k.style.transform = `translateY(${(1 - e) * 40 + pk * 5 - x * 30}px) scale(${0.6 + 0.4 * e})`;
+        k.style.opacity = clamp(e) * (1 - x);
+        k.style.boxShadow = `0 ${5 - pk * 4}px 0 #c9cede, 0 ${10 - pk * 6}px 22px rgba(30,40,90,.16)`;
+        k.style.background = pk > 0.3 ? "linear-gradient(#e9edff, #dfe5ff)" : "";
+      });
+    }
+    const sub = cap.querySelector(".sub");
+    if (sc.themes) {
+      const tc = t - sc.a;
+      const idx = clamp(Math.floor((tc - 0.25) / 0.62), 0, 8);
+      const label = tc < 0.25 ? "" : THEMES[idx];
+      words(sub, label, t, sc.a + 0.25 + idx * 0.62, 0.03, 0.3, exit);
+    } else {
+      words(sub, sc.sub, t, start + 0.3, 0.025, 0.5, exit);
+    }
+  }
+
+  // Privacy.
+  const pv = $("#privacy");
+  const po = prog(t, 30.1, 30.3) * (1 - inOut(prog(t, 33.25, 33.6)));
+  pv.style.display = po > 0 ? "block" : "none";
+  if (po > 0) {
+    pv.style.opacity = po;
+    pv.style.transform = `translateY(${-inOut(prog(t, 33.25, 33.6)) * 60}px)`;
+    const lk = outBack(clamp(prog(t, 30.2, 30.75)));
+    $("#p-lock").style.transform = `scale(${Math.max(0, lk)})`;
+    $("#p-lock").style.opacity = clamp(prog(t, 30.2, 30.4));
+    words($("#p-big"), "No telemetry.", t, 30.4, 0.08, 0.6);
+    words($("#p-sub"), "Your messages stay between your computer, Google, and your phone.", t, 30.95, 0.04, 0.5);
+  }
+
+  // End card.
+  const en = $("#end");
+  const eo = prog(t, 33.5, 33.7);
+  en.style.display = eo > 0 ? "block" : "none";
+  if (eo > 0) {
+    en.style.opacity = eo;
+    const ek = outBack(clamp(prog(t, 33.6, 34.2)));
+    $("#e-icon").style.transform = `scale(${Math.max(0, ek)}) rotate(${(1 - clamp(ek)) * -14}deg)`;
+    $("#e-icon").style.opacity = clamp(prog(t, 33.6, 33.85));
+    words($("#e-word"), "GoMessages", t, 33.95, 0, 0.6);
+    [...document.querySelectorAll(".plat")].forEach((p, i) => {
+      const k = outBack(clamp(prog(t, 34.5 + i * 0.12, 35.0 + i * 0.12)));
+      p.style.transform = `translateY(${(1 - k) * 40}px) scale(${0.7 + 0.3 * k})`; p.style.opacity = clamp(k);
+    });
+    words($("#e-free"), "Free and open source.", t, 35.1, 0.06, 0.5);
+    const uk = outExpo(prog(t, 35.5, 36.1));
+    $("#e-url").style.transform = `translateY(${(1 - uk) * 30}px)`; $("#e-url").style.opacity = uk;
+    $("#e-fine").style.opacity = prog(t, 35.9, 36.4);
+  }
+}
+window.render = render;
+</script>
+</body></html>
