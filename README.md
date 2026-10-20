@@ -22,19 +22,6 @@ A real desktop app, fast and keyboard-friendly.
 
 Your phone needs Google Messages and an internet connection.
 
-## Shortcuts
-
-| Action                 | Shortcut          |
-| ---------------------- | ----------------- |
-| Switch conversation    | `Cmd+K`           |
-| New chat               | `Cmd+N`           |
-| Search                 | `Cmd+F`           |
-| All shortcuts          | `Cmd+/`           |
-| Settings               | `Cmd+,`           |
-| Text size              | `Cmd+=` / `Cmd+-` |
-
-On Windows and Linux, use `Ctrl` instead of `Cmd`.
-
 ## Tour
 
 Press `Cmd+K`, type a few letters, hit Enter.
