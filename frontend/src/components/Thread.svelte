@@ -44,6 +44,7 @@
     void conv.id;
     pinned = true;
     lastTop = 0;
+    lastHeight = 0;
     settled = false;
     menu = null;
     deleting = null;
@@ -53,21 +54,37 @@
     if (list) list.scrollTop = list.scrollHeight;
   }
 
+  /** Scroll to the end now and again over the next frames: WebKit can size
+   *  a new row (its time and receipts line) after the first layout. */
+  function settleBottom() {
+    toBottom();
+    let frames = 3;
+    const again = () => {
+      if (!pinned) return;
+      toBottom();
+      if (--frames > 0) requestAnimationFrame(again);
+    };
+    requestAnimationFrame(again);
+  }
+
   // Keep the end in view while rows lay out (photos load, pages arrive).
   $effect(() => {
     if (!content) return;
     const ro = new ResizeObserver(() => {
-      if (pinned) toBottom();
+      if (pinned) settleBottom();
     });
     ro.observe(content);
     return () => ro.disconnect();
   });
 
+  // Any change at the end: a new message, or a sent one swapping its
+  // temporary id for the real one (a fresh row).
   $effect(() => {
     void msgs.length;
+    void msgs[msgs.length - 1]?.id;
     if (thread?.loaded && pinned) {
       tick().then(() => {
-        toBottom();
+        settleBottom();
         settled = true;
       });
     }
@@ -84,6 +101,7 @@
   }
 
   let lastTop = 0;
+  let lastHeight = 0;
   /** Our own smooth scroll to the end is running: it isn't the user leaving. */
   let autoScrolling = false;
   function onScroll() {
@@ -93,8 +111,11 @@
     // content-visibility laying out) also leave us short of the bottom for a
     // moment, and the ResizeObserver catches up with those.
     if (atBottom) pinned = true;
-    else if (list.scrollTop < lastTop - 1 && !autoScrolling) pinned = false;
+    // A height change (a row resized or replaced) can pull scrollTop up by
+    // itself; that isn't the user leaving either.
+    else if (list.scrollTop < lastTop - 1 && list.scrollHeight === lastHeight && !autoScrolling) pinned = false;
     lastTop = list.scrollTop;
+    lastHeight = list.scrollHeight;
     app.atBottom = pinned;
     if (pinned) app.unseenBelow = 0;
     if (list.scrollTop < 400) void loadOlder();
@@ -118,7 +139,7 @@
       const land = () => {
         if (!autoScrolling) return;
         autoScrolling = false;
-        if (pinned) toBottom();
+        if (pinned) settleBottom();
       };
       el.addEventListener("scrollend", land, { once: true });
       setTimeout(land, 1000);
@@ -232,7 +253,7 @@
           {/if}
         </div>
         {#each msgs as m, i (m.id)}
-          <div class="item">
+          <div class="item" class:tail={i >= msgs.length - 10}>
             {#if i === 0 || !sameDay(msgs[i - 1].timestamp, m.timestamp)}
               <p class="day subtle small">{dayLabel(m.timestamp)}</p>
             {/if}
@@ -366,6 +387,11 @@
     /* Rows off screen skip layout and paint: long threads stay fast. */
     content-visibility: auto;
     contain-intrinsic-size: auto 64px;
+  }
+  /* The newest rows always lay out for real: a placeholder height there
+     leaves the end of the thread short when a message arrives. */
+  .item.tail {
+    content-visibility: visible;
   }
   .center,
   .top {
