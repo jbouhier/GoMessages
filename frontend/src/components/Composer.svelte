@@ -235,6 +235,12 @@
     resize: none;
     line-height: 1.4;
     max-height: 160px;
+    /* Glyphs keep a fixed advance while typing: no kerning, ligatures or
+       contextual alternates, so WebKit re-shaping a word never shifts letters. */
+    font-kerning: none;
+    font-variant-ligatures: none;
+    font-feature-settings: "kern" 0, "liga" 0, "clig" 0, "calt" 0;
+    text-rendering: optimizeSpeed;
   }
   .send {
     width: 44px;
