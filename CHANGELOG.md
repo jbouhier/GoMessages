@@ -3,6 +3,13 @@
 What changed in each GoMessages release. The section for a version is also
 its release notes on GitHub.
 
+## [0.4.1] - 2026-10-20
+
+### Fixed
+
+- Letters no longer shift or jump while you type a message, for example
+  after an apostrophe in "I'm".
+
 ## [0.4.0] - 2026-10-19
 
 A new GoMessages. Instead of showing the Google Messages web page in a
