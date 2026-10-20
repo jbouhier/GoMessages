@@ -3,6 +3,13 @@
 What changed in each GoMessages release. The section for a version is also
 its release notes on GitHub.
 
+## [0.4.2] - 2026-10-20
+
+### Fixed
+
+- When you send or receive a message, the conversation now scrolls all the
+  way down, so the time and delivery checkmarks under it stay in view.
+
 ## [0.4.1] - 2026-10-20
 
 ### Fixed
