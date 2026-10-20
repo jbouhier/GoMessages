@@ -6,6 +6,12 @@ description: Keyboard shortcuts in GoMessages.
 Press `Cmd+/` in the app to see them all. On Windows and Linux, use `Ctrl`
 where Mac uses `Cmd`, and `Alt` for `Option`.
 
+<img src="/GoMessages/product/shortcuts.jpg" alt="The shortcuts list, opened with Cmd+/" width="2400" height="1500" />
+
+`Cmd+K` jumps to any conversation: type a few letters, then `Enter`.
+
+<img src="/GoMessages/product/quick-switcher.jpg" alt="The quick switcher, opened with Cmd+K" width="2400" height="1500" />
+
 ## Get around
 
 | Action | Shortcut |

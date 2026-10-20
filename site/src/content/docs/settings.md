@@ -6,7 +6,7 @@ description: The GoMessages settings.
 Open with `Cmd+,` (Mac) or `Ctrl+,` (Windows, Linux), or **GoMessages →
 Settings…** in the menu bar.
 
-<img src="/GoMessages/product/settings.png" alt="GoMessages settings" width="1180" height="760" />
+<img src="/GoMessages/product/settings.jpg" alt="GoMessages settings" width="2400" height="1500" />
 
 ## Appearance
 

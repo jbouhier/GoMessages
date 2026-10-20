@@ -4,10 +4,17 @@
   import Avatar from "./Avatar.svelte";
 
   let input = $state<HTMLInputElement>();
+  let list = $state<HTMLDivElement>();
   $effect(() => input?.focus());
 
   const sw = $derived(app.switcher!);
   const matches = $derived(app.switcherMatches);
+
+  // Keep the keyboard selection visible when the list scrolls (short windows).
+  $effect(() => {
+    const i = sw.index;
+    (list?.children[i] as HTMLElement | undefined)?.scrollIntoView({ block: "nearest" });
+  });
 
   function pick(id: string) {
     app.switcher = null;
@@ -40,6 +47,7 @@
   {#if !matches.length}
     <p class="none subtle">No conversation matches</p>
   {/if}
+  <div class="list" bind:this={list}>
   {#each matches as c, i (c.id)}
     <button class="row" class:active={i === sw.index} onclick={() => pick(c.id)} onmouseenter={() => (sw.index = i)}>
       <Avatar name={c.name} color={c.color} group={c.is_group} id={c.avatar_id} size={34} />
@@ -51,6 +59,7 @@
       {#if !sw.query && i < 9}<span class="hint subtle small">{isMac ? "⌘" : "Ctrl+"}{i + 1}</span>{/if}
     </button>
   {/each}
+  </div>
   <p class="foot subtle small">↑↓ to move · Enter to open · Esc to close</p>
 </div>
 
@@ -58,10 +67,14 @@
   .switcher {
     position: fixed;
     z-index: 41;
-    top: 90px;
+    --top: clamp(12px, 10vh, 90px);
+    top: var(--top);
     left: 50%;
     transform: translateX(-50%);
     width: min(540px, calc(100vw - 40px));
+    max-height: calc(100vh - var(--top) - 12px);
+    display: flex;
+    flex-direction: column;
     padding: 10px;
     background: var(--bg);
     border: 1px solid var(--divider);
@@ -69,6 +82,7 @@
     box-shadow: 0 12px 40px var(--shadow);
   }
   .field {
+    flex-shrink: 0;
     background: var(--composer);
     border-radius: 12px;
     padding: 11px 14px;
@@ -77,6 +91,11 @@
   .field input {
     width: 100%;
     font-size: 17px;
+  }
+  .list {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
   }
   .row {
     display: flex;
@@ -110,6 +129,12 @@
     text-align: center;
   }
   .foot {
+    flex-shrink: 0;
     margin: 6px 8px 2px;
+  }
+  @media (max-height: 500px) {
+    .foot {
+      display: none;
+    }
   }
 </style>
