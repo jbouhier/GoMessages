@@ -112,8 +112,17 @@ jobs:
           mkdir -p dist
           tar -czf "dist/${{ matrix.artifact }}" -C bin gomessages
 
+      # Only the highest version is "Latest", whatever order runs finish in
+      # (two tags pushed together race otherwise).
+      - name: Latest?
+        id: latest
+        run: |
+          top=$(git ls-remote --tags --refs origin 'v*' | sed 's#.*refs/tags/##' | sort -V | tail -n 1)
+          echo "make=$([ "$top" = "$GITHUB_REF_NAME" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+
       - name: Upload
         uses: softprops/action-gh-release@v3
         with:
           files: dist/${{ matrix.artifact }}
           body_path: release-notes.md
+          make_latest: ${{ steps.latest.outputs.make }}
