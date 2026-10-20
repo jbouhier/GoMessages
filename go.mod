@@ -8,6 +8,7 @@ require (
 	github.com/wailsapp/wails/v3 v3.0.0-beta.29
 	go.mau.fi/mautrix-gmessages v0.2609.0
 	go.mau.fi/util v0.10.1
+	golang.org/x/sys v0.48.0
 )
 
 require (
@@ -21,7 +22,6 @@ require (
 	golang.org/x/crypto v0.57.0 // indirect
 	golang.org/x/exp v0.0.0-20260908205506-85c1c2202aba // indirect
 	golang.org/x/net v0.59.0 // indirect
-	golang.org/x/sys v0.48.0 // indirect
 	golang.org/x/text v0.42.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 )
