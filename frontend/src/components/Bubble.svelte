@@ -3,7 +3,8 @@
   import { emojiOnly } from "../lib/match";
   import { formatTime } from "../lib/time";
   import { isImage, mediaURL, type BubbleAction, type Conversation, type Media, type Message } from "../lib/types";
-  import { Go } from "../lib/go";
+  import { Go, openURL } from "../lib/go";
+  import { linkify } from "../lib/links";
   import Avatar from "./Avatar.svelte";
   import Icon from "./Icon.svelte";
   import { isPending } from "../lib/messages";
@@ -51,6 +52,14 @@
 
   function thumb(md: Media) {
     return md.thumb_id ? app.mediaState(md.thumb_id, md.thumb_key ?? "", md.mime) : app.mediaState(md.id, md.key, md.mime);
+  }
+
+  const segments = $derived(m.text ? linkify(m.text) : []);
+
+  function openLink(e: MouseEvent, href: string) {
+    // The webview must never navigate away from the app.
+    e.preventDefault();
+    openURL(href);
   }
 
   async function openFile(md: Media) {
@@ -108,7 +117,15 @@
             <div class="what">{quoted.text || (quoted.media?.length ? "📷 Photo" : "Message")}</div>
           </div>
         {/if}
-        {#if m.text}<div class="text">{m.text}</div>{/if}
+        {#if m.text}
+          <div class="text">{#each segments as seg, i (i)}{#if seg.href}<a
+                  href={seg.href}
+                  title={seg.href}
+                  rel="noreferrer"
+                  draggable="false"
+                  onclick={(e) => openLink(e, seg.href!)}>{seg.text}</a
+                >{:else}{seg.text}{/if}{/each}</div>
+        {/if}
         {#if m.reactions?.length}
           <div class="reactions">
             {#each m.reactions as r (r.emoji)}
@@ -308,6 +325,16 @@
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     line-height: 1.38;
+  }
+  .text a {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    text-decoration-thickness: 1px;
+    cursor: pointer;
+  }
+  .text a:hover {
+    text-decoration-thickness: 2px;
   }
   .big .text {
     padding: 0 2px;
