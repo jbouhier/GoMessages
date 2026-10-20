@@ -42,7 +42,7 @@ beforeEach(async () => {
   page = await browser.newPage({ viewport: { width: 1180, height: 760 } });
   page.on("pageerror", (e) => assert.fail(`page error: ${e.message}`));
   await page.goto(`http://${ADDR}/?http`);
-  await page.getByRole("button", { name: "Maya Chen" }).first().waitFor();
+  await page.getByRole("button", { name: "JB Bouhier" }).first().waitFor();
 });
 
 const state = (fn, arg) => page.evaluate(fn, arg);
@@ -63,7 +63,7 @@ async function open(name, id) {
 }
 
 test("lists the conversations by name", async () => {
-  for (const name of ["Maya Chen", "Sam Rivera", "Climbing crew", "Dad"]) {
+  for (const name of ["JB Bouhier", "Oliver Bennett", "Haruto Sato", "Lukas Weber"]) {
     assert.ok(await page.getByRole("button", { name }).first().isVisible(), `${name} in the list`);
   }
 });
@@ -71,14 +71,14 @@ test("lists the conversations by name", async () => {
 // Regression: switching chats showed an empty pane or stopped short of the
 // newest message.
 test("switching chats lands on the newest message every time", async () => {
-  await open("Sam Rivera", "4");
-  await open("Maya Chen", "1");
-  await open("Sam Rivera", "4");
+  await open("Oliver Bennett", "4");
+  await open("JB Bouhier", "1");
+  await open("Oliver Bennett", "4");
 });
 
 // Regression: reaching the top loaded older pages but jumped the view.
 test("scrolling up loads older messages and keeps the place", async () => {
-  await open("Sam Rivera", "4");
+  await open("Oliver Bennett", "4");
   const before = await state(() => window.gm.threads["4"].msgs.length);
   await page.locator(".thread .list").evaluate((l) => (l.scrollTop = 0));
   await until("an older page", (n) => window.gm.threads["4"].msgs.length > n && !window.gm.threads["4"].loading, before);
@@ -89,7 +89,7 @@ test("scrolling up loads older messages and keeps the place", async () => {
 });
 
 test("Page Up leaves the end and End returns to it", async () => {
-  await open("Sam Rivera", "4");
+  await open("Oliver Bennett", "4");
   await page.locator(".thread .list").click({ position: { x: 600, y: 10 } });
   await page.keyboard.press("PageUp");
   await until("Page Up to leave the end", () => !window.gm.atBottom);
@@ -109,13 +109,13 @@ test("⌘B hides and shows the list", async () => {
 
 test("⌘K switches to the best match", async () => {
   await act("switch");
-  await page.getByPlaceholder("Jump to a conversation…").fill("sr");
+  await page.getByPlaceholder("Jump to a conversation…").fill("ob");
   await page.keyboard.press("Enter");
-  await until("Sam's chat", () => window.gm.selected === "4" && !window.gm.switcher);
+  await until("Oliver's chat", () => window.gm.selected === "4" && !window.gm.switcher);
 });
 
 test("settings open and Escape goes back", async () => {
-  await open("Maya Chen", "1");
+  await open("JB Bouhier", "1");
   await page.getByPlaceholder("RCS message").focus();
   await act("settings");
   await until("settings", () => window.gm.settingsOpen);
@@ -132,7 +132,7 @@ test("new chat starts a conversation with a number", async () => {
 
 // Regression: the viewer showed the same photo whatever was picked.
 test("the viewer walks the photos and Escape closes it", async () => {
-  await open("Maya Chen", "1");
+  await open("Mei Tanaka", "5");
   await page.locator(".photo").first().click();
   await until("the viewer", () => window.gm.viewer);
   const first = await state(() => ({ ...window.gm.viewer }));
@@ -145,7 +145,7 @@ test("the viewer walks the photos and Escape closes it", async () => {
 });
 
 test("a sent message goes from sending to read", async () => {
-  await open("Maya Chen", "1");
+  await open("JB Bouhier", "1");
   const box = page.getByPlaceholder("RCS message");
   await box.fill("hello from a test");
   await box.press("Enter");
@@ -158,7 +158,7 @@ test("a sent message goes from sending to read", async () => {
 });
 
 test("receipts: one grey check when sent, two when delivered, two in the accent when read", async () => {
-  await open("Maya Chen", "1");
+  await open("JB Bouhier", "1");
   const box = page.getByPlaceholder("RCS message");
   const text = "checking the checks";
   await box.fill(text);
@@ -197,7 +197,7 @@ test("receipts: one grey check when sent, two when delivered, two in the accent 
 // Regression: the phone echoed a send with a tmp id other than ours, the
 // placeholder never got replaced, and the message showed twice.
 test("a send the phone echoes with a different tmp id shows once", async () => {
-  await open("Maya Chen", "1");
+  await open("JB Bouhier", "1");
   await state(() => {
     const call = window.gm.call.bind(window.gm);
     window.gm.call = (cmd, args) => call(cmd, cmd === "send" ? { ...args, tmp_id: "rewritten-by-phone" } : args);
@@ -234,8 +234,8 @@ test("zoomed in to 300%, nothing overflows the window", async () => {
 
 // Regression: a reaction badge covered the time and read receipt.
 test("a reaction doesn't cover the time under the bubble", async () => {
-  await open("Maya Chen", "1");
-  const row = page.locator(".row", { hasText: "board games" }).first();
+  await open("JB Bouhier", "1");
+  const row = page.locator(".row", { hasText: "owns the couch" }).first();
   await row.scrollIntoViewIfNeeded();
   const badge = await row.locator(".reactions").boundingBox();
   const meta = await row.locator(".meta").boundingBox();
@@ -245,7 +245,7 @@ test("a reaction doesn't cover the time under the bubble", async () => {
 // Regression: photos in the viewer were stretched to the previous photo's
 // shape, or shown at half size instead of filling the space.
 test("the viewer fills the space with each photo, in its own shape", async () => {
-  await open("Maya Chen", "1");
+  await open("Mei Tanaka", "5");
   await page.locator(".photo").first().click();
   for (const step of ["first", "ArrowRight", "ArrowLeft"]) {
     if (step !== "first") await page.keyboard.press(step);
@@ -260,7 +260,7 @@ test("the viewer fills the space with each photo, in its own shape", async () =>
 });
 
 test("a one-line message has no scroll bar in the message box", async () => {
-  await open("Maya Chen", "1");
+  await open("JB Bouhier", "1");
   const box = page.getByPlaceholder("RCS message");
   await box.fill("hi");
   assert.equal(await box.evaluate((t) => getComputedStyle(t).overflowY), "hidden");
@@ -386,7 +386,7 @@ test("the theme picker and the mode", async () => {
 // Transparency fades the panes and the theme's art to what's behind the
 // window; bubbles stay solid. (The native blur itself needs the app.)
 test("transparency fades every theme the same way", async () => {
-  await open("Maya Chen", "1");
+  await open("JB Bouhier", "1");
   const alpha = (sel) =>
     page.locator(sel).first().evaluate((e) => {
       const m = getComputedStyle(e).backgroundColor.match(/[\d.]+/g).map(Number);
@@ -430,9 +430,9 @@ test("transparency fades every theme the same way", async () => {
 const focusedName = () => state(() => document.activeElement?.getAttribute("aria-label") || document.activeElement?.textContent.trim());
 
 test("hovering a message shows React, Reply and More on the side toward the middle", async () => {
-  await open("Maya Chen", "1");
-  const theirs = page.locator(".thread .row", { hasText: "board games" }).first();
-  const mine = page.locator(".thread .row", { hasText: "Friday to Sunday" }).first();
+  await open("JB Bouhier", "1");
+  const theirs = page.locator(".thread .row", { hasText: "owns the couch" }).first();
+  const mine = page.locator(".thread .row", { hasText: "He's tiny" }).first();
   await theirs.hover();
   await until("the buttons to show", () => getComputedStyle(document.querySelector(".row:hover .actions")).opacity === "1");
   const names = await theirs.locator(".actions button").evaluateAll((bs) => bs.map((b) => b.getAttribute("aria-label")));
@@ -445,8 +445,8 @@ test("hovering a message shows React, Reply and More on the side toward the midd
 });
 
 test("the More menu: arrows and Tab move, Escape closes and gives focus back", async () => {
-  await open("Maya Chen", "1");
-  const row = page.locator(".thread .row", { hasText: "board games" }).first();
+  await open("JB Bouhier", "1");
+  const row = page.locator(".thread .row", { hasText: "owns the couch" }).first();
   await row.hover();
   await row.getByRole("button", { name: "More" }).click();
   const items = await page.locator(".msg-menu [role=menuitem]").evaluateAll((bs) => bs.map((b) => b.textContent.trim()));
@@ -464,8 +464,8 @@ test("the More menu: arrows and Tab move, Escape closes and gives focus back", a
 });
 
 test("deleting a message asks first, with Cancel as the default", async () => {
-  await open("Dad", "3");
-  const row = () => page.locator(".thread .row", { hasText: "Will do tonight" });
+  await open("Lukas Weber", "3");
+  const row = () => page.locator(".thread .row", { hasText: "Sending it tonight" });
   await row().hover();
   await row().getByRole("button", { name: "More" }).click();
   await page.keyboard.press("End");
@@ -486,12 +486,12 @@ test("deleting a message asks first, with Cancel as the default", async () => {
   assert.equal(await focusedName(), "Cancel", "Tab stays in the dialog");
   await page.keyboard.press("Shift+Tab");
   await page.keyboard.press("Enter");
-  await until("the message to go", () => !window.gm.threads["3"].msgs.some((m) => m.text === "Will do tonight"));
+  await until("the message to go", () => !window.gm.threads["3"].msgs.some((m) => m.text === "Sending it tonight"));
 });
 
 test("the reaction picker walks with the arrows and reacts on Enter", async () => {
-  await open("Maya Chen", "1");
-  const row = page.locator(".thread .row", { hasText: "see you at 7" }).first();
+  await open("JB Bouhier", "1");
+  const row = page.locator(".thread .row", { hasText: "Dinner at 7" }).first();
   await row.hover();
   await row.getByRole("button", { name: "React" }).click();
   assert.equal(await focusedName(), "React ❤️");
@@ -509,8 +509,8 @@ test("the reaction picker walks with the arrows and reacts on Enter", async () =
 });
 
 test("More reactions opens every emoji: search, arrows, Enter reacts", async () => {
-  await open("Maya Chen", "1");
-  const row = page.locator(".thread .row", { hasText: "board games" }).first();
+  await open("JB Bouhier", "1");
+  const row = page.locator(".thread .row", { hasText: "owns the couch" }).first();
   await row.hover();
   await row.getByRole("button", { name: "React" }).click();
   await page.getByRole("menuitem", { name: "More reactions" }).click();
@@ -533,11 +533,11 @@ test("More reactions opens every emoji: search, arrows, Enter reacts", async () 
 });
 
 test("Reply quotes the message above the box and sends it as a reply", async () => {
-  await open("Léa Dubois", "6");
-  const row = page.locator(".thread .row", { hasText: "Paris" }).first();
+  await open("Lucía Fernández", "6");
+  const row = page.locator(".thread .row", { hasText: "Madrid" }).first();
   await row.hover();
   await row.getByRole("button", { name: "Reply" }).click();
-  await page.locator(".replying", { hasText: "Paris" }).waitFor();
+  await page.locator(".replying", { hasText: "Madrid" }).waitFor();
   assert.equal(await state(() => document.activeElement?.tagName), "TEXTAREA", "the box has focus");
   await page.keyboard.press("Escape");
   assert.equal(await page.locator(".replying").count(), 0, "Escape drops the reply");
@@ -546,12 +546,12 @@ test("Reply quotes the message above the box and sends it as a reply", async () 
   await page.keyboard.type("Super");
   await page.keyboard.press("Enter");
   await until("the reply", () => window.gm.threads["6"].msgs.some((m) => m.text === "Super" && m.reply_to && !m.id.startsWith("tmp_")));
-  await page.locator(".thread .row", { hasText: "Super" }).locator(".quote", { hasText: "Paris" }).waitFor();
+  await page.locator(".thread .row", { hasText: "Super" }).locator(".quote", { hasText: "Madrid" }).waitFor();
 });
 
 test("a conversation's menu and its confirmation work from the keyboard", async () => {
-  await page.locator(".row-wrap", { hasText: "Bank of Example" }).hover();
-  await page.getByRole("button", { name: "More options for Bank of Example" }).click();
+  await page.locator(".row-wrap", { hasText: "Mei Tanaka" }).hover();
+  await page.getByRole("button", { name: "More options for Mei Tanaka" }).click();
   assert.equal(await focusedName(), "Archive");
   await page.keyboard.press("End");
   await page.keyboard.press("Enter");
@@ -559,5 +559,5 @@ test("a conversation's menu and its confirmation work from the keyboard", async 
   assert.equal(await focusedName(), "Cancel");
   await page.keyboard.press("Escape");
   assert.equal(await page.getByRole("alertdialog").count(), 0);
-  assert.equal(await focusedName(), "More options for Bank of Example", "focus back on ⋮");
+  assert.equal(await focusedName(), "More options for Mei Tanaka", "focus back on ⋮");
 });

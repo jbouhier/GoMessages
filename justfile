@@ -44,7 +44,7 @@ install:
 # Go tests, UI unit tests, then the UI tests in headless Chrome against the demo backend
 test: build unit
     go test ./...
-    cd frontend && node --test e2e/
+    cd frontend && node --test e2e/*.test.mjs
 
 # UI unit tests (pure TS, no browser)
 unit:
@@ -79,7 +79,7 @@ screenshot: build
     set -euo pipefail
     shots="$(mktemp -d)"
     just tour "$shots" light
-    cp "$shots/a-maya-light.png" site/public/product/desktop.png
+    cp "$shots/a-jb-light.png" site/public/product/desktop.png
     cp "$shots/e-settings-light.png" site/public/product/settings.png
     rm -rf "$shots"
 

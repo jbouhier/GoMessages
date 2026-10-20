@@ -2,14 +2,10 @@ package main
 
 import (
 	"context"
+	"embed"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"image"
-	"image/color"
-	"image/jpeg"
-	"image/png"
-	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -17,6 +13,12 @@ import (
 	"sync"
 	"time"
 )
+
+// demoAssets are the demo's contact photos and shared pictures: AI-generated
+// portraits (CC0, faker-js/assets-person-portrait) and Unsplash photos.
+//
+//go:embed assets/demo/*.jpg
+var demoAssets embed.FS
 
 // demo serves sample data through the same protocol, so the app can be
 // developed and screenshotted without a phone. Pairing pretends to succeed
@@ -55,12 +57,12 @@ func (d *demo) start(ctx context.Context) {
 			t   string
 		}
 	}{
-		{"1", "Maya Chen", "#e8710a", false, nil},
-		{"2", "Climbing crew", "#1a73e8", true, nil},
-		{"3", "Dad", "#188038", false, nil},
-		{"4", "Sam Rivera", "#a142f4", false, nil},
-		{"5", "Bank of Example", "#5f6368", false, nil},
-		{"6", "Léa Dubois", "#d93025", false, nil},
+		{"1", "JB Bouhier", "#e8710a", false, nil},
+		{"2", "Haruto Sato", "#1a73e8", false, nil},
+		{"3", "Lukas Weber", "#188038", false, nil},
+		{"4", "Oliver Bennett", "#a142f4", false, nil},
+		{"5", "Mei Tanaka", "#5f6368", false, nil},
+		{"6", "Lucía Fernández", "#d93025", false, nil},
 	}
 	type line = struct {
 		me  bool
@@ -69,31 +71,31 @@ func (d *demo) start(ctx context.Context) {
 		t   string
 	}
 	seed[0].lines = []line{
-		{false, "Maya Chen", 26 * time.Hour, "Did you end up booking the cabin?"},
-		{true, "", 25 * time.Hour, "Yes! Friday to Sunday 🏔️"},
-		{false, "Maya Chen", 25 * time.Hour, "Amazing. I'll bring the board games"},
-		{false, "Maya Chen", 4 * time.Minute, "Leaving work now, see you at 7?"},
+		{false, "JB Bouhier", 31 * time.Minute, "Big news. Someone moved in with me."},
+		{true, "", 30 * time.Minute, "Since when??"},
+		{true, "", 4 * time.Minute, "He's tiny."},
+		{false, "JB Bouhier", 3 * time.Minute, "He's 3 months old and already owns the couch."},
+		{true, "", 2 * time.Minute, "Who pays rent?"},
+		{false, "JB Bouhier", 1 * time.Minute, "Not him. Dinner at 7 is on me, apparently 🐟"},
 	}
 	seed[1].lines = []line{
-		{false, "Jordan", 3 * time.Hour, "Gym at 6 tomorrow?"},
-		{false, "Priya", 3 * time.Hour, "I'm in"},
-		{true, "", 2 * time.Hour, "Count me in too"},
-		{false, "Jordan", 40 * time.Minute, "Bring chalk, I'm out"},
+		{false, "Haruto Sato", 50 * time.Minute, "Are you free tonight?"},
+		{false, "Haruto Sato", 40 * time.Minute, "Found a new ramen place 🍜"},
 	}
 	seed[2].lines = []line{
-		{false, "Dad", 50 * time.Hour, "Call me when you get a chance"},
-		{true, "", 49 * time.Hour, "Will do tonight"},
+		{false, "Lukas Weber", 50 * time.Hour, "Kannst du mir das Dokument schicken?"},
+		{true, "", 49 * time.Hour, "Sending it tonight"},
 	}
 	seed[3].lines = []line{
-		{true, "", 6 * 24 * time.Hour, "Thanks for the book recommendation"},
-		{false, "Sam Rivera", 6 * 24 * time.Hour, "Anytime! Let me know what you think"},
+		{true, "", 6 * 24 * time.Hour, "Thanks for the book tip"},
+		{false, "Oliver Bennett", 6 * 24 * time.Hour, "Anytime! Tell me what you think"},
 	}
 	seed[4].lines = []line{
-		{false, "Bank of Example", 8 * 24 * time.Hour, "Your verification code is 482913. Don't share it with anyone."},
+		{false, "Mei Tanaka", 8 * 24 * time.Hour, "Sent you the photos from Kyoto 📸"},
 	}
 	seed[5].lines = []line{
-		{false, "Léa Dubois", 12 * 24 * time.Hour, "On se voit à Paris le mois prochain ?"},
-		{true, "", 12 * 24 * time.Hour, "Oui, avec plaisir !"},
+		{false, "Lucía Fernández", 12 * 24 * time.Hour, "¿Nos vemos en Madrid el mes que viene?"},
+		{true, "", 12 * 24 * time.Hour, "¡Claro que sí!"},
 	}
 	for _, s := range seed {
 		var msgs []Message
@@ -120,18 +122,27 @@ func (d *demo) start(ctx context.Context) {
 			Unread: s.id == "1" || s.id == "2", LatestMsgID: last.ID,
 		}
 	}
-	d.msgs["1"][len(d.msgs["1"])-2].Reactions = []Reaction{{Emoji: "😂", Count: 1, Mine: true}}
-	// Two photos from Maya, for the media viewer.
-	for i, caption := range []string{"Look at this view from the cabin 🏔️", ""} {
-		d.nextID++
-		id := fmt.Sprintf("demo-photo-%d", i+1)
-		d.msgs["1"] = append(d.msgs["1"], Message{
-			ID: fmt.Sprint(d.nextID), ConversationID: "1", Sender: "Maya Chen", Status: "received",
-			Timestamp: now.Add(-time.Duration(3-i) * time.Minute).UnixMilli(), Text: caption,
-			Media: []Media{{ID: id, ThumbID: id + "-thumb", Mime: "image/jpeg", Name: id + ".jpg", Width: 1600, Height: 1000}},
-		})
+	jb := d.msgs["1"]
+	jb[3].Reactions = []Reaction{{Emoji: "😂", Count: 1, Mine: true}}
+	// One photo from JB, after "Since when??", for the media viewer.
+	d.nextID++
+	photo := Message{
+		ID: fmt.Sprint(d.nextID), ConversationID: "1", Sender: "JB Bouhier", Status: "received",
+		Timestamp: now.Add(-29 * time.Minute).UnixMilli(), Text: "Since 8:14 this morning. Meet Kevin 🐾",
+		Media: []Media{{ID: "demo-photo-1", ThumbID: "demo-photo-1-thumb", Mime: "image/jpeg", Name: "photo.jpg", Width: 1000, Height: 1000}},
 	}
-	// A long history for Sam, to exercise paging and scrolling.
+	d.msgs["1"] = append(jb[:2:2], append([]Message{photo}, jb[2:]...)...)
+	// Two photos from Mei, for walking the viewer.
+	for i, p := range []struct{ w, h int64 }{{1500, 1000}, {1600, 1200}} {
+		d.nextID++
+		id := fmt.Sprintf("demo-photo-%d", i+2)
+		d.msgs["5"] = append(d.msgs["5"][:i:i], append([]Message{{
+			ID: fmt.Sprint(d.nextID), ConversationID: "5", Sender: "Mei Tanaka", Status: "received",
+			Timestamp: now.Add(-8*24*time.Hour - time.Duration(2-i)*time.Minute).UnixMilli(),
+			Media:     []Media{{ID: id, ThumbID: id + "-thumb", Mime: "image/jpeg", Name: id + ".jpg", Width: p.w, Height: p.h}},
+		}}, d.msgs["5"][i:]...)...)
+	}
+	// A long history for Oliver, to exercise paging and scrolling.
 	lines := []string{"Did you see the game last night?", "Lunch tomorrow?", "Running late, 10 min",
 		"Haha that's amazing 😂", "Can you send me the address?", "Sure, here it is: 42 Main St",
 		"Thanks! See you there 👍", "How was the trip?", "Long story, tell you later",
@@ -148,7 +159,7 @@ func (d *demo) start(ctx context.Context) {
 		if me {
 			m.Status = "read"
 		} else {
-			m.Sender = "Sam Rivera"
+			m.Sender = "Oliver Bennett"
 		}
 		hist = append(hist, m)
 	}
@@ -174,9 +185,9 @@ func (d *demo) handle(ctx context.Context, cmd string, raw json.RawMessage) (any
 		return map[string]string{"account": "demo@gmail.com"}, nil
 	case "contacts":
 		return []map[string]any{
-			{"name": "Sam Rivera", "number": "+15551230101", "formatted_number": "+1 555 123 0101", "top": true, "avatar_id": "p4"},
-			{"name": "Maya Chen", "number": "+15551230102", "formatted_number": "+1 555 123 0102", "top": true, "avatar_id": "p1"},
-			{"name": "Alex Morgan", "number": "+15551230103", "formatted_number": "+1 555 123 0103", "top": false, "avatar_id": ""},
+			{"name": "Oliver Bennett", "number": "+15551230101", "formatted_number": "+1 555 123 0101", "top": true, "avatar_id": "p4"},
+			{"name": "JB Bouhier", "number": "+15551230102", "formatted_number": "+1 555 123 0102", "top": true, "avatar_id": "p1"},
+			{"name": "Alex Morgan", "number": "+15551230103", "formatted_number": "+1 555 123 0103", "top": false, "avatar_id": "palex"},
 		}, nil
 	case "sims":
 		return []map[string]any{
@@ -347,84 +358,51 @@ func (d *demo) reply(c Conversation, sent Message) {
 	d.o.event("conversation", cc)
 }
 
-// Maya and Sam have "photos"; everyone else shows initials.
+// Everyone has a photo; a group would show its icon.
 func demoAvatarID(id string, group bool) string {
-	if group || (id != "1" && id != "4") {
+	if group {
 		return ""
 	}
 	return "p" + id
 }
 
-// avatars draws a soft two-tone portrait stand-in for each demo ID.
+// avatars copies each demo contact's photo into the media folder. IDs
+// without one get initials.
 func (d *demo) avatars(ids []string) (any, error) {
 	out := map[string]string{}
 	for _, id := range ids {
-		path := filepath.Join(d.dir, "media", "demo_"+id+".png")
-		if _, err := os.Stat(path); err != nil {
-			img := image.NewRGBA(image.Rect(0, 0, 96, 96))
-			for y := 0; y < 96; y++ {
-				for x := 0; x < 96; x++ {
-					dx, dy := float64(x-48), float64(y-38)
-					c := color.RGBA{uint8(90 + y), uint8(140 + x/2), 200, 255}
-					if id == "p4" {
-						c = color.RGBA{220, uint8(120 + y/2), uint8(80 + x), 255}
-					}
-					if dx*dx+dy*dy < 18*18 || (y > 64 && dx*dx < float64((y-40)*(y-40))) {
-						c = color.RGBA{250, 235, 220, 255} // head and shoulders
-					}
-					img.Set(x, y, c)
-				}
-			}
-			f, err := os.Create(path)
-			if err != nil {
-				return nil, err
-			}
-			_ = png.Encode(f, img)
-			f.Close()
+		path, err := d.asset("avatar-"+id+".jpg", "demo_"+id+".jpg")
+		if err != nil {
+			out[id] = ""
+			continue
 		}
 		out[id] = path
 	}
 	return out, nil
 }
 
-// photo draws a demo landscape: sky, sun and hills. Thumbnails are small.
+// photo serves the demo pictures and their thumbnails.
 func (d *demo) photo(id string) (any, error) {
-	if !strings.HasPrefix(id, "demo-photo-") {
+	name, ok := strings.CutPrefix(id, "demo-")
+	if !ok {
 		return nil, errors.New("no such media")
 	}
-	path := filepath.Join(d.dir, "media", id+".jpg")
-	if _, err := os.Stat(path); err != nil {
-		w, h := 1600, 1000
-		if strings.HasSuffix(id, "-thumb") {
-			w, h = 320, 200
-		}
-		second := strings.Contains(id, "-2")
-		img := image.NewRGBA(image.Rect(0, 0, w, h))
-		for y := 0; y < h; y++ {
-			for x := 0; x < w; x++ {
-				fy := float64(y) / float64(h)
-				fx := float64(x) / float64(w)
-				c := color.RGBA{uint8(40 + 120*fy), uint8(110 + 90*fy), uint8(230 - 60*fy), 255}
-				if second {
-					c = color.RGBA{uint8(250 - 40*fy), uint8(140 + 60*fy), uint8(90 + 40*fy), 255}
-				}
-				sx, sy := fx-0.72, fy-0.28
-				if sx*sx+sy*sy*2.5 < 0.006 {
-					c = color.RGBA{255, 236, 170, 255}
-				}
-				hill := 0.62 + 0.08*math.Sin(fx*9) + 0.05*math.Sin(fx*23+1)
-				if fy > hill {
-					c = color.RGBA{uint8(30 + 40*fx), uint8(90 + 50*fy), 60, 255}
-				}
-				img.Set(x, y, c)
-			}
-		}
-		f, err := os.Create(path)
-		if err != nil {
-			return nil, err
-		}
-		_ = jpeg.Encode(f, img, &jpeg.Options{Quality: 88})
-		f.Close()
+	path, err := d.asset(name+".jpg", id+".jpg")
+	if err != nil {
+		return nil, errors.New("no such media")
 	}
 	return map[string]string{"path": path}, nil
+}
+
+// asset writes an embedded demo file to the media folder once.
+func (d *demo) asset(name, as string) (string, error) {
+	path := filepath.Join(d.dir, "media", as)
+	if _, err := os.Stat(path); err == nil {
+		return path, nil
+	}
+	data, err := demoAssets.ReadFile("assets/demo/" + name)
+	if err != nil {
+		return "", err
+	}
+	return path, os.WriteFile(path, data, 0o600)
 }
