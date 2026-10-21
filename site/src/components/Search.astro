@@ -1,0 +1,8 @@
+---
+// Search only in the docs. The landing page nav stays logo + links.
+import Default from '@astrojs/starlight/components/Search.astro';
+
+const isLanding = !!Astro.locals.starlightRoute.entry.data.hero;
+---
+
+{!isLanding && <Default />}
