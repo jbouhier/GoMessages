@@ -3,6 +3,15 @@
 What changed in each GoMessages release. The section for a version is also
 its release notes on GitHub.
 
+## [0.4.3] - 2026-10-21
+
+### Fixed
+
+- New chat opens with your contacts right away instead of a loading
+  spinner, and shows a Retry link if the phone doesn't answer.
+- After sending a message, a spinner no longer sticks at the top of the
+  conversation when the phone is slow to respond.
+
 ## [0.4.2] - 2026-10-20
 
 ### Fixed
