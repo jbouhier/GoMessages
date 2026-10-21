@@ -237,11 +237,17 @@ export class AppState {
    *  crossfade of the whole window. Instant where the webview has no view
    *  transitions or the system asks for reduced motion. */
   restyle(change: () => void) {
-    const doc = document as Document & { startViewTransition?: (update: () => void) => unknown };
+    const doc = document as Document & { startViewTransition?: (update: () => void) => { ready?: Promise<unknown>; finished?: Promise<unknown> } };
     if (!doc.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) return change();
     // The old frame is captured first; flushSync lands the new one (state,
     // DOM and the root's data-theme effect) before the fade starts.
-    doc.startViewTransition(() => flushSync(change));
+    const vt = doc.startViewTransition(() => flushSync(change));
+    // A second restyle before this fade ends skips it: the change still
+    // lands, only the animation is dropped, and its promises reject with
+    // "Transition was skipped". Expected, so not a page error. A change that
+    // throws still surfaces through updateCallbackDone.
+    vt?.ready?.catch(() => {});
+    vt?.finished?.catch(() => {});
   }
 
   setZoom(zoom: number) {
