@@ -1,20 +1,26 @@
 ---
+import Illustration from './Illustration.astro';
+
 const repo = 'https://github.com/jbouhier/GoMessages/releases/latest/download';
 const items = [
   { os: 'mac', name: 'Mac', note: 'Apple Silicon', file: 'GoMessages-macos-aarch64.dmg' },
-  { os: 'windows', name: 'Windows', note: 'Windows 10 and 11', file: 'GoMessages-windows-x86_64.zip' },
+  { os: 'windows', name: 'Windows', note: '10 and 11', file: 'GoMessages-windows-x86_64.zip' },
   { os: 'linux', name: 'Linux', note: 'x64', file: 'GoMessages-linux-x86_64.tar.gz' },
-];
+] as const;
 ---
 
 <ul class="gm-dl not-content">
   {items.map((i) => (
     <li>
       <a href={`${repo}/${i.file}`} data-os={i.os} title={i.file}>
-        <span class="name">{i.name}</span>
-        <span class="note">{i.note}</span>
-        <span class="go" aria-hidden="true">
-          <svg viewBox="0 0 20 20"><path d="M10 3.5v9m0 0 3.75-3.75M10 12.5 6.25 8.75M4.5 16h11" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        <Illustration name={i.os} />
+        <span class="meta">
+          <span class="name">{i.name}</span>
+          <span class="note">{i.note}</span>
+        </span>
+        <span class="go">
+          Download
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 4v9m0 0 3.5-3.5M10 13 6.5 9.5M5 16h10" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" /></svg>
         </span>
       </a>
     </li>
@@ -24,57 +30,92 @@ const items = [
 <style>
   .gm-dl {
     list-style: none;
-    margin: 1.5rem 0 0;
+    margin: 1.75rem 0 0;
     padding: 0;
-    border-radius: 14px;
-    border: 1px solid var(--sl-color-hairline-light);
-    overflow: hidden;
-  }
-  li + li {
-    border-top: 1px solid var(--sl-color-hairline-light);
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
   }
   a {
     display: flex;
-    align-items: baseline;
-    gap: 0.625rem;
-    padding: 1rem 1.25rem;
+    flex-direction: column;
+    height: 100%;
+    padding: 0.75rem 0.75rem 1.125rem;
+    border-radius: 18px;
     text-decoration: none;
-    transition: background 0.12s;
+    background: var(--gm-mantle);
+    box-shadow: inset 0 0 0 1px var(--gm-edge);
+    transition: box-shadow 0.15s, transform 0.2s cubic-bezier(0.2, 0.7, 0.2, 1);
   }
   a:hover {
-    background: var(--gm-hover);
+    transform: translateY(-2px);
+    box-shadow: inset 0 0 0 1px var(--gm-edge), 0 14px 30px -18px rgba(0, 0, 0, 0.45);
   }
   a:focus-visible {
     outline: 2px solid var(--gm-accent);
-    outline-offset: -2px;
+    outline-offset: 2px;
+  }
+  a.mine {
+    box-shadow: inset 0 0 0 1.5px var(--gm-accent);
+  }
+  .meta {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    margin: 0.75rem 0.5rem 0;
   }
   .name {
-    font-weight: 600;
+    font-size: 1.125rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
     color: var(--sl-color-white);
   }
   .note {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     color: var(--gm-subtext);
   }
   .go {
-    align-self: center;
-    margin-left: auto;
-    display: grid;
-    place-items: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 50%;
-    color: var(--gm-subtext);
-    transition: background 0.12s, color 0.12s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin: 0.5rem 0.5rem 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--gm-accent);
   }
   .go svg {
-    width: 1.125rem;
-    height: 1.125rem;
+    width: 1rem;
+    height: 1rem;
+    transition: transform 0.2s;
   }
-  a:hover .go,
-  .mine .go {
-    color: var(--gm-on-accent);
-    background: var(--gm-accent);
+  a:hover .go svg {
+    transform: translateY(2px);
+  }
+  @media (max-width: 48rem) {
+    .gm-dl {
+      grid-template-columns: 1fr;
+    }
+    a {
+      flex-direction: row;
+      align-items: center;
+      flex-wrap: wrap;
+      padding: 0.5rem 1rem 0.5rem 0.5rem;
+    }
+    a :global(.gm-ill) {
+      width: 7.5rem;
+      flex: none;
+    }
+    .meta {
+      flex-direction: column;
+      gap: 0.125rem;
+      margin: 0 0 0 0.5rem;
+    }
+    .go {
+      margin: 0 0 0 auto;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    a, .go svg { transition: none; }
   }
 </style>
 
