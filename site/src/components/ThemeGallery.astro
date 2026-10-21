@@ -14,9 +14,11 @@ const themes = Object.entries(files)
 const base = import.meta.env.BASE_URL.replace(/\/$/, '');
 const src = (id: string, mode: string) => `${base}/product/windows/${id}-${mode}.webp`;
 const first = themes[0];
+// A short sweep of the slider when it first comes into view.
+const { intro = false } = Astro.props as { intro?: boolean };
 ---
 
-<div class="gm-themes not-content" data-gm-themes>
+<div class="gm-themes not-content" data-gm-themes data-intro={intro ? '' : undefined}>
   <div class="bar">
     <div class="chips" role="radiogroup" aria-label="Theme">
       {themes.map((t, i) => (
@@ -372,9 +374,11 @@ const first = themes[0];
     new IntersectionObserver((entries, obs) => {
       if (entries.some((e) => e.isIntersecting)) { warm(); obs.disconnect(); }
     }, { rootMargin: '200px' }).observe(root);
-    new IntersectionObserver((entries, obs) => {
-      if (entries.some((e) => e.isIntersecting)) { setTimeout(playIntro, 250); obs.disconnect(); }
-    }, { threshold: 0.6 }).observe(compare);
+    if (root.hasAttribute('data-intro')) {
+      new IntersectionObserver((entries, obs) => {
+        if (entries.some((e) => e.isIntersecting)) { setTimeout(playIntro, 250); obs.disconnect(); }
+      }, { threshold: 0.6 }).observe(compare);
+    }
 
     setPos(50);
     render();
