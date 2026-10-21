@@ -2,7 +2,7 @@
 // Editorial spot illustrations: ink line over a soft color field.
 // Colors follow the site's light and dark mode.
 interface Props {
-  name: 'download' | 'signin' | 'pair' | 'privacy' | 'mac' | 'windows' | 'linux';
+  name: 'download' | 'signin' | 'pair' | 'privacy';
   class?: string;
 }
 const { name, class: className } = Astro.props;
@@ -78,54 +78,6 @@ const { name, class: className } = Astro.props;
       <circle class="dot" cx="196" cy="36" r="5" />
     </g>
   )}
-  {name === 'mac' && (
-    <g>
-      <ellipse class="field" cx="120" cy="84" rx="104" ry="64" />
-      <circle class="dot" cx="200" cy="34" r="5" />
-      <!-- open laptop, thin bezel -->
-      <rect class="paper ink" x="58" y="34" width="124" height="84" rx="8" />
-      <rect class="soft" x="66" y="42" width="38" height="68" rx="3" />
-      <rect class="accent" x="112" y="50" width="54" height="9" rx="4.5" />
-      <rect class="softer" x="112" y="66" width="40" height="9" rx="4.5" />
-      <rect class="accent" x="128" y="82" width="38" height="9" rx="4.5" />
-      <path class="ink" d="M40 122h160c0 6-4 9-10 9H50c-6 0-10-3-10-9z" />
-      <path class="ink" d="M108 122h24" />
-    </g>
-  )}
-
-  {name === 'windows' && (
-    <g>
-      <ellipse class="field" cx="120" cy="84" rx="104" ry="64" />
-      <circle class="dot" cx="40" cy="38" r="5" />
-      <!-- monitor on a stand, a window and a taskbar -->
-      <rect class="paper ink" x="50" y="26" width="140" height="92" rx="7" />
-      <rect class="softer" x="58" y="34" width="124" height="68" rx="3" />
-      <rect class="paper ink" x="72" y="44" width="72" height="48" rx="4" />
-      <rect class="accent" x="80" y="56" width="40" height="7" rx="3.5" />
-      <rect class="soft" x="80" y="69" width="54" height="7" rx="3.5" />
-      <rect class="soft" x="58" y="104" width="124" height="7" rx="2" />
-      <circle class="accent" cx="120" cy="107.5" r="2.4" />
-      <path class="ink" d="M112 118l-4 16h24l-4-16" />
-      <path class="ink" d="M96 136h48" />
-    </g>
-  )}
-
-  {name === 'linux' && (
-    <g>
-      <ellipse class="field" cx="120" cy="84" rx="104" ry="64" />
-      <circle class="dot" cx="198" cy="36" r="5" />
-      <!-- a terminal window -->
-      <rect class="paper ink" x="46" y="32" width="148" height="100" rx="10" />
-      <path class="ink" d="M46 50h148" />
-      <circle class="softer ink" cx="58" cy="41" r="3" />
-      <circle class="softer ink" cx="69" cy="41" r="3" />
-      <circle class="softer ink" cx="80" cy="41" r="3" />
-      <path class="ink thick" d="M62 72l10 8-10 8" />
-      <rect class="accent" x="80" y="85" width="16" height="4" rx="2" />
-      <rect class="soft" x="62" y="102" width="84" height="7" rx="3.5" />
-      <rect class="softer" x="62" y="115" width="56" height="7" rx="3.5" />
-    </g>
-  )}
 </svg>
 
 <style>
@@ -143,9 +95,6 @@ const { name, class: className } = Astro.props;
   .tint-signin { --field: #efe3f6; }
   .tint-pair { --field: #fde9de; }
   .tint-privacy { --field: #dcf1ea; }
-  .tint-mac { --field: #e3ebff; }
-  .tint-windows { --field: #efe3f6; }
-  .tint-linux { --field: #fde9de; }
 
   :global([data-theme='dark']) .gm-ill {
     --ink: #e3e3e3;
@@ -158,9 +107,6 @@ const { name, class: className } = Astro.props;
   :global([data-theme='dark']) .tint-signin { --field: #2c1f45; }
   :global([data-theme='dark']) .tint-pair { --field: #3a231c; }
   :global([data-theme='dark']) .tint-privacy { --field: #15342d; }
-  :global([data-theme='dark']) .tint-mac { --field: #1a2647; }
-  :global([data-theme='dark']) .tint-windows { --field: #2c1f45; }
-  :global([data-theme='dark']) .tint-linux { --field: #3a231c; }
 
   .field { fill: var(--field); }
   .dot { fill: var(--accent); opacity: 0.35; }
