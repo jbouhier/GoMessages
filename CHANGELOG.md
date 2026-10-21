@@ -3,6 +3,17 @@
 What changed in each GoMessages release. The section for a version is also
 its release notes on GitHub.
 
+## [Unreleased]
+
+### Added
+
+- Links in messages show the page's title and site icon in one line.
+  Hover or focus a link for a card with its picture, description, and the
+  full address, including where a redirect really lands.
+- Settings > Chats > Link previews: previews for links from your contacts
+  (the default), from everyone, or off. Links from numbers not in your
+  contacts stay plain, since fetching a preview tells the site you got it.
+
 ## [0.4.3] - 2026-10-21
 
 ### Fixed

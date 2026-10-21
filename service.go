@@ -31,6 +31,7 @@ type Messages struct {
 	notifier *notifications.NotificationService
 	notifyOK bool
 	backend  backend
+	links    *links
 	dir      string
 	demo     bool
 
@@ -79,6 +80,7 @@ func newMessages(demo bool) (*Messages, error) {
 		}
 		log := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.TimeOnly}).Level(level).With().Timestamp().Logger()
 		m.backend = newDaemon(o, dir, log)
+		m.links = newLinks(dir)
 	}
 	return m, nil
 }
@@ -119,7 +121,7 @@ func (m *Messages) ServiceShutdown() error {
 
 // Call runs one protocol command (conversations, messages, send, download,
 // avatars, contacts, sims, new_conversation, mark_read, react, typing,
-// logout, cancel_pair, state…).
+// logout, cancel_pair, state…), plus link_preview.
 func (m *Messages) Call(cmd string, args map[string]any) (any, error) {
 	raw, err := json.Marshal(args)
 	if err != nil {
@@ -127,6 +129,15 @@ func (m *Messages) Call(cmd string, args map[string]any) (any, error) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
+	// Link previews are web pages, not the phone: Go fetches them itself.
+	// The demo answers from its own samples, so it never goes online.
+	if cmd == "link_preview" && m.links != nil {
+		var a struct {
+			URL string `json:"url"`
+		}
+		_ = json.Unmarshal(raw, &a)
+		return m.links.preview(ctx, a.URL)
+	}
 	return m.backend.handle(ctx, cmd, raw)
 }
 

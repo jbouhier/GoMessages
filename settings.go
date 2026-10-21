@@ -29,7 +29,8 @@ type Settings struct {
 	NotificationSound   bool      `json:"notification_sound"`
 	EnterSends          bool      `json:"enter_sends"`
 	SendTyping          bool      `json:"send_typing"`
-	Muted               []string  `json:"muted"` // conversations that don't notify; the phone doesn't report mute state
+	LinkPreviews        string    `json:"link_previews"` // whose links get a preview: contacts, everyone, or off
+	Muted               []string  `json:"muted"`         // conversations that don't notify; the phone doesn't report mute state
 }
 
 // Geometry is the window's position and size in points; the position also
@@ -41,7 +42,7 @@ type Geometry struct {
 func defaultSettings() Settings {
 	return Settings{
 		Mode: "system", Theme: "default", Background: "gradient", Zoom: 1, SidebarVisible: true, SidebarWidth: 340, SidebarWideWidth: 340,
-		Notifications: true, NotificationPreview: true, NotificationSound: true, EnterSends: true, SendTyping: true,
+		Notifications: true, NotificationPreview: true, NotificationSound: true, EnterSends: true, SendTyping: true, LinkPreviews: "contacts",
 	}
 }
 
@@ -57,6 +58,11 @@ func parseSettings(data []byte) Settings {
 	}
 	s.Zoom = math.Min(math.Max(s.Zoom, 0.5), 3)
 	migrateTheme(data, &s)
+	switch s.LinkPreviews {
+	case "contacts", "everyone", "off":
+	default:
+		s.LinkPreviews = "contacts"
+	}
 	s.Transparency = math.Min(math.Max(s.Transparency, 0), 100)
 	if math.IsNaN(s.Transparency) {
 		s.Transparency = 0

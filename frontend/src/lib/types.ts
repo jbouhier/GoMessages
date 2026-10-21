@@ -56,6 +56,17 @@ export interface Message {
   is_old?: boolean;
 }
 
+/** A web page's title and picture, fetched by Go (linkpreview.go). */
+export interface LinkPreview {
+  url: string;
+  title: string;
+  description?: string;
+  site: string;
+  /** Files in the media folder: show them with mediaURL. */
+  image?: string;
+  icon?: string;
+}
+
 /** The buttons that show beside a message on hover. */
 export type BubbleAction = "react" | "reply" | "more";
 

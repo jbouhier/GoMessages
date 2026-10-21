@@ -135,6 +135,17 @@
           <div><div>Send typing indicators</div><div class="hint">Let people see when you're typing (RCS).</div></div>
           <button class="switch" class:on={s.send_typing} aria-label="Send typing indicators" onclick={() => set("send_typing", !s.send_typing)}></button>
         </div>
+        <div class="row">
+          <div>
+            <div>Link previews</div>
+            <div class="hint">Show a link's title and picture. Fetching it tells the site you got the link.</div>
+          </div>
+          <div class="segmented" role="radiogroup" aria-label="Link previews">
+            {#each [["contacts", "Contacts"], ["everyone", "Everyone"], ["off", "Off"]] as [value, label] (value)}
+              <button class:on={(s.link_previews || "contacts") === value} role="radio" aria-checked={(s.link_previews || "contacts") === value} onclick={() => set("link_previews", value)}>{label}</button>
+            {/each}
+          </div>
+        </div>
       </div>
 
       <h2>Account</h2>

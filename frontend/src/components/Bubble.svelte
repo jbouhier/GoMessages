@@ -4,7 +4,8 @@
   import { formatTime } from "../lib/time";
   import { isImage, mediaURL, type BubbleAction, type Conversation, type Media, type Message } from "../lib/types";
   import { Go, openURL } from "../lib/go";
-  import { linkify } from "../lib/links";
+  import { isWebLink, linkify, mayPreview } from "../lib/links";
+  import LinkChip from "./LinkChip.svelte";
   import Avatar from "./Avatar.svelte";
   import Icon from "./Icon.svelte";
   import { isPending } from "../lib/messages";
@@ -55,6 +56,9 @@
   }
 
   const segments = $derived(m.text ? linkify(m.text) : []);
+  // A one-to-one chat is named after the other person; in a group, each
+  // message has its sender.
+  const previews = $derived(mayPreview(app.settings.link_previews, m.from_me, conv.is_group ? m.sender : conv.name));
 
   function openLink(e: MouseEvent, href: string) {
     // The webview must never navigate away from the app.
@@ -118,7 +122,8 @@
           </div>
         {/if}
         {#if m.text}
-          <div class="text">{#each segments as seg, i (i)}{#if seg.href}<a
+          <div class="text">{#each segments as seg, i (i)}{#if seg.href && previews && isWebLink(seg.href)}<LinkChip
+                  href={seg.href} />{:else if seg.href}<a
                   href={seg.href}
                   title={seg.href}
                   rel="noreferrer"

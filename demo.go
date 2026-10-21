@@ -92,6 +92,7 @@ func (d *demo) start(ctx context.Context) {
 	}
 	seed[4].lines = []line{
 		{false, "Mei Tanaka", 8 * 24 * time.Hour, "Sent you the photos from Kyoto 📸"},
+		{true, "", 8*24*time.Hour - 20*time.Minute, "So jealous. Next spring we go for these: https://en.wikipedia.org/wiki/Cherry_blossom"},
 	}
 	seed[5].lines = []line{
 		{false, "Lucía Fernández", 12 * 24 * time.Hour, "¿Nos vemos en Madrid el mes que viene?"},
@@ -326,6 +327,12 @@ func (d *demo) handle(ctx context.Context, cmd string, raw json.RawMessage) (any
 		}
 		_ = json.Unmarshal(raw, &a)
 		return d.photo(a.MediaID)
+	case "link_preview":
+		var a struct {
+			URL string `json:"url"`
+		}
+		_ = json.Unmarshal(raw, &a)
+		return d.linkPreview(a.URL)
 	}
 	return nil, fmt.Errorf("unknown command %q", cmd)
 }
@@ -394,6 +401,27 @@ func (d *demo) photo(id string) (any, error) {
 		return nil, errors.New("no such media")
 	}
 	return map[string]string{"path": path}, nil
+}
+
+// linkPreview answers from a sample instead of the web, so the demo, the UI
+// tests and the screenshots never go online.
+func (d *demo) linkPreview(url string) (any, error) {
+	if url != "https://en.wikipedia.org/wiki/Cherry_blossom" {
+		return nil, errors.New("no preview")
+	}
+	time.Sleep(250 * time.Millisecond)
+	image, err := d.asset("photo-3.jpg", "lp-demo-cherry.jpg")
+	if err != nil {
+		image = ""
+	}
+	return LinkPreview{
+		URL:         url,
+		Title:       "Cherry blossom",
+		Description: "A cherry blossom, or sakura, is the flower of trees in Prunus subgenus Cerasus. Viewing them in spring is the custom of hanami.",
+		Site:        "Wikipedia",
+		Image:       image,
+		FetchedAt:   time.Now().Unix(),
+	}, nil
 }
 
 // asset writes an embedded demo file to the media folder once.

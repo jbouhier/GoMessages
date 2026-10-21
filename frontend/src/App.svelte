@@ -5,6 +5,7 @@
   import { backgroundOf, paneOpacity } from "./lib/themes";
   import { Go } from "./lib/go";
   import Backdrop from "./components/Backdrop.svelte";
+  import LinkCard from "./components/LinkCard.svelte";
   import NewChat from "./components/NewChat.svelte";
   import Pairing from "./components/Pairing.svelte";
   import SettingsPage from "./components/SettingsPage.svelte";
@@ -129,6 +130,7 @@
 {#if app.switcher}<Switcher />{/if}
 {#if app.showShortcuts}<Shortcuts />{/if}
 {#if app.viewer}<Viewer />{/if}
+<LinkCard />
 {#if app.toast}<div class="toast" role="status">{app.toast}</div>{/if}
 
 <style>

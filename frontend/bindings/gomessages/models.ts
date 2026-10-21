@@ -49,6 +49,11 @@ export interface Settings {
     "send_typing": boolean;
 
     /**
+     * whose links get a preview: contacts, everyone, or off
+     */
+    "link_previews": string;
+
+    /**
      * conversations that don't notify; the phone doesn't report mute state
      */
     "muted": string[] | null;

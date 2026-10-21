@@ -1,7 +1,7 @@
 // Unit tests for linkify. Run with `just unit`.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { linkify } from "../src/lib/links.ts";
+import { isWebLink, linkify, mayPreview, shortURL } from "../src/lib/links.ts";
 
 const hrefs = (t: string) => linkify(t).filter((s) => s.href).map((s) => s.href);
 
@@ -32,4 +32,21 @@ test("file names and versions stay text", () => {
 test("segments rebuild the original text", () => {
   const t = "a https://x.io b www.y.com. c";
   assert.equal(linkify(t).map((s) => s.text).join(""), t);
+});
+
+test("short addresses for chips", () => {
+  assert.equal(shortURL("https://www.github.com/"), "github.com");
+  assert.equal(shortURL("https://github.com/jb/repo/"), "github.com/jb/repo");
+  assert.equal(shortURL("https://a.com/x?y=1"), "a.com/x?y=1");
+  assert.equal(isWebLink("mailto:a@b.com"), false);
+});
+
+test("previews follow the policy and the sender", () => {
+  assert.equal(mayPreview("contacts", false, "Haruto Sato"), true);
+  assert.equal(mayPreview("contacts", false, "+1 555-123-0101"), false);
+  assert.equal(mayPreview("contacts", false, "72345"), false);
+  assert.equal(mayPreview("contacts", true, "+1 555-123-0101"), true);
+  assert.equal(mayPreview("everyone", false, "+1 555-123-0101"), true);
+  assert.equal(mayPreview("off", true, "Haruto Sato"), false);
+  assert.equal(mayPreview("contacts", false, "Lucía Fernández"), true);
 });

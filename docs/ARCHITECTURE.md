@@ -38,6 +38,9 @@ is too.
   `conversation`, `message`, `typing`, `pair_emoji`, …).
 - `demo.go`: the same `backend` interface with sample conversations, for
   `--demo`, the UI tests, and screenshots.
+- `linkpreview.go`: link previews. Go fetches the page itself (no cookies,
+  no scripts), refuses any address on this computer or its network, and
+  keeps the result for a week. The UI asks through `Call("link_preview")`.
 - `model.go`: the JSON shapes the UI receives, converted from libgm's protobufs.
 - `settings.go`, `settings_migrate.go`: `settings.json`, with the window's
   place tracked by Go and older settings converted on load.
@@ -90,6 +93,8 @@ The folder and files are readable by the owner only.
 
 - `session.json`: the libgm pairing. Treat it like account credentials.
 - `settings.json`: appearance, notifications, chats, zoom, window place.
+- `links/`: cached link previews, one small JSON file per link. Their
+  pictures and icons go in `media/` as `lp-*` files.
 - `media/`: downloaded photos, files, and contact photos. The UI loads them
   through `/media/<file>`, which serves nothing outside this folder.
 - `demo/`: the same layout for `--demo`.

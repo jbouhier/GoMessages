@@ -4,7 +4,7 @@
 import { flushSync } from "svelte";
 import { Go, on, overHTTP } from "./go";
 import type { Settings as GoSettings } from "../../bindings/gomessages/models";
-import type { Contact, Conversation, Media, Message, SimChoice } from "./types";
+import type { Contact, Conversation, LinkPreview, Media, Message, SimChoice } from "./types";
 import { isImage } from "./types";
 import { findMessage, isPending, newTmpID, upsertMessage } from "./messages";
 import { score } from "./match";
@@ -13,6 +13,9 @@ import { themeOf } from "./themes";
 export type Link = "starting" | "unpaired" | "pairing" | "connecting" | "connected" | "phone_offline" | "error";
 export type Pairing = { kind: "idle" } | { kind: "signing-in" } | { kind: "emoji"; emoji: string; account: string };
 export type MediaState = { state: "loading" } | { state: "ready"; path: string } | { state: "failed" };
+export type PreviewState = { state: "loading" } | { state: "ready"; preview: LinkPreview } | { state: "failed" };
+/** The hover card over a link chip: which link, and where the chip is. */
+export type LinkCard = { href: string; rect: { left: number; top: number; bottom: number; width: number } };
 export type ThreadScroll = "page-up" | "page-down" | "top" | "bottom";
 
 export interface Thread {
@@ -77,6 +80,8 @@ export class AppState {
   search = $state("");
   typing = $state<Record<string, number>>({});
   media = $state<Record<string, MediaState>>({});
+  previews = $state<Record<string, PreviewState>>({});
+  linkCard = $state<LinkCard | null>(null);
   avatars = $state<Record<string, string | null>>({});
   attachment = $state<string | null>(null);
   toast = $state<string | null>(null);
@@ -95,6 +100,7 @@ export class AppState {
     notification_sound: true,
     enter_sends: true,
     send_typing: true,
+    link_previews: "contacts",
     muted: [],
   });
   settingsOpen = $state(false);
@@ -122,6 +128,7 @@ export class AppState {
 
   private avatarQueue = new Set<string>();
   private mediaRequested = new Set<string>();
+  private previewRequested = new Set<string>();
   private lastTypingSent = 0;
   private notificationsAsked = false;
   private toastTimer: number | undefined;
@@ -672,6 +679,25 @@ export class AppState {
     this.call("download", { media_id: id, key, mime }).then(
       (v) => (this.media[id] = v?.path ? { state: "ready", path: v.path } : { state: "failed" }),
       () => (this.media[id] = { state: "failed" }),
+    );
+  }
+
+  /** A link's preview, fetched on first sight like media. */
+  previewState(href: string): PreviewState {
+    const known = this.previews[href];
+    if (known) return known;
+    if (!this.previewRequested.has(href)) {
+      this.previewRequested.add(href);
+      queueMicrotask(() => this.fetchPreview(href));
+    }
+    return { state: "loading" };
+  }
+
+  private fetchPreview(href: string) {
+    this.previews[href] = { state: "loading" };
+    this.call("link_preview", { url: href }).then(
+      (p: LinkPreview | null) => (this.previews[href] = p?.title ? { state: "ready", preview: p } : { state: "failed" }),
+      () => (this.previews[href] = { state: "failed" }),
     );
   }
 
