@@ -3,7 +3,7 @@
 What changed in each GoMessages release. The section for a version is also
 its release notes on GitHub.
 
-## [Unreleased]
+## [0.5.0] - 2026-10-21
 
 ### Added
 
