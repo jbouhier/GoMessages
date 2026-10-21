@@ -173,6 +173,7 @@ func (d *daemon) loggedOut(reason string) {
 		c.Disconnect()
 	}
 	_ = os.Remove(d.sessionPath())
+	_ = os.Remove(d.contactsPath())
 	d.o.event("logged_out", map[string]string{"reason": reason})
 	d.setState(stateUnpaired)
 }
@@ -412,6 +413,8 @@ func (d *daemon) handle(ctx context.Context, cmd string, raw json.RawMessage) (a
 			return nil, err
 		}
 		return map[string]string{"account": c.Config.GetDeviceInfo().GetEmail()}, nil
+	case "contacts_cached":
+		return d.cachedContacts(), nil
 	case "cancel_pair":
 		d.mu.Lock()
 		if d.pairCancel != nil {
@@ -454,43 +457,7 @@ func (d *daemon) handle(ctx context.Context, cmd string, raw json.RawMessage) (a
 		return convs, nil
 
 	case "contacts":
-		resp, err := c.ListContacts(ctx)
-		if err != nil {
-			return nil, err
-		}
-		top, err := c.ListTopContacts(ctx)
-		if err != nil {
-			d.log.Debug().Err(err).Msg("Top contacts unavailable")
-		}
-		topIDs := make(map[string]bool)
-		if top != nil {
-			for _, contact := range top.GetContacts() {
-				topIDs[contact.GetParticipantID()] = true
-			}
-		}
-		contacts := make([]map[string]any, 0, len(resp.GetContacts()))
-		for _, contact := range resp.GetContacts() {
-			number := contact.GetNumber().GetNumber()
-			if number == "" {
-				continue
-			}
-			name := contact.GetName()
-			if name == "" {
-				name = contact.GetNameAgain()
-			}
-			if name == "" {
-				name = number
-			}
-			formatted := contact.GetNumber().GetFormattedNumber()
-			if formatted == "" {
-				formatted = number
-			}
-			contacts = append(contacts, map[string]any{
-				"name": name, "number": number, "formatted_number": formatted,
-				"top": topIDs[contact.GetParticipantID()], "avatar_id": contact.GetParticipantID(),
-			})
-		}
-		return contacts, nil
+		return d.contacts(ctx, c)
 
 	case "messages":
 		if args.Count == 0 {
@@ -914,4 +881,100 @@ func (d *daemon) phoneOf(ctx context.Context, id string) string {
 		}
 	}
 	return ""
+}
+
+// ---- contacts ----
+
+// The phone answers LIST_CONTACTS slowly or not at all at times (right after
+// a contact change, or while the session is still coming up). The UI shows
+// the last list from disk at once and refreshes it in the background, so
+// these timeouts only bound how long the refresh spinner runs.
+const (
+	contactsTimeout    = 20 * time.Second
+	topContactsTimeout = 5 * time.Second
+)
+
+func (d *daemon) contactsPath() string { return filepath.Join(d.dir, "contacts.json") }
+
+func (d *daemon) contacts(ctx context.Context, c *libgm.Client) ([]map[string]any, error) {
+	// Top contacts only rank the list: fetch them alongside, never wait long.
+	topCh := make(chan map[string]bool, 1)
+	go func() {
+		tctx, cancel := context.WithTimeout(ctx, topContactsTimeout)
+		defer cancel()
+		ids := map[string]bool{}
+		top, err := c.ListTopContacts(tctx)
+		if err != nil {
+			d.log.Debug().Err(err).Msg("Top contacts unavailable")
+		}
+		for _, contact := range top.GetContacts() {
+			ids[contact.GetParticipantID()] = true
+		}
+		topCh <- ids
+	}()
+
+	lctx, cancel := context.WithTimeout(ctx, contactsTimeout)
+	defer cancel()
+	resp, err := c.ListContacts(lctx)
+	if errors.Is(err, context.DeadlineExceeded) {
+		return nil, errors.New("the phone didn't send its contacts in time")
+	} else if err != nil {
+		return nil, err
+	}
+	var topIDs map[string]bool
+	select {
+	case topIDs = <-topCh:
+	case <-time.After(topContactsTimeout):
+	}
+
+	contacts := make([]map[string]any, 0, len(resp.GetContacts()))
+	for _, contact := range resp.GetContacts() {
+		number := contact.GetNumber().GetNumber()
+		if number == "" {
+			continue
+		}
+		name := contact.GetName()
+		if name == "" {
+			name = contact.GetNameAgain()
+		}
+		if name == "" {
+			name = number
+		}
+		formatted := contact.GetNumber().GetFormattedNumber()
+		if formatted == "" {
+			formatted = number
+		}
+		contacts = append(contacts, map[string]any{
+			"name": name, "number": number, "formatted_number": formatted,
+			"top": topIDs[contact.GetParticipantID()], "avatar_id": contact.GetParticipantID(),
+		})
+	}
+	d.saveContacts(contacts)
+	return contacts, nil
+}
+
+func (d *daemon) saveContacts(contacts []map[string]any) {
+	data, err := json.Marshal(contacts)
+	if err != nil {
+		return
+	}
+	tmp := d.contactsPath() + ".tmp"
+	if err := os.WriteFile(tmp, data, 0o600); err == nil {
+		err = os.Rename(tmp, d.contactsPath())
+	}
+	if err != nil {
+		d.log.Err(err).Msg("Save contacts")
+	}
+}
+
+func (d *daemon) cachedContacts() []map[string]any {
+	data, err := os.ReadFile(d.contactsPath())
+	if err != nil {
+		return nil
+	}
+	var contacts []map[string]any
+	if json.Unmarshal(data, &contacts) != nil {
+		return nil
+	}
+	return contacts
 }

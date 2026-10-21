@@ -19,8 +19,14 @@ export interface Thread {
   msgs: Message[];
   more: boolean;
   loading: boolean;
+  /** The request in flight pages older messages (the only load the UI shows). */
+  older: boolean;
   loaded: boolean;
   loadingSince: number;
+  /** Bumped per request so a stale answer can't clear a newer one's state. */
+  seq: number;
+  /** No older-page retry before this time, after one failed. */
+  olderRetryAt: number;
 }
 
 export type Settings = Omit<GoSettings, "window" | "maximized"> & { window?: unknown; maximized?: boolean };
@@ -487,7 +493,7 @@ export class AppState {
   }
 
   async loadMessages(conv: string, older: boolean) {
-    const thread = (this.threads[conv] ??= { msgs: [], more: false, loading: false, loaded: false, loadingSince: 0 });
+    const thread = (this.threads[conv] ??= { msgs: [], more: false, loading: false, older: false, loaded: false, loadingSince: 0, seq: 0, olderRetryAt: 0 });
     // A request that never got an answer doesn't block the thread forever.
     if (thread.loading && Date.now() - thread.loadingSince < 12000) return;
     const args: Record<string, unknown> = { conversation_id: conv, count: 40 };
@@ -497,19 +503,29 @@ export class AppState {
       args.before_id = oldest.id;
       args.before_ts = oldest.timestamp;
     }
+    if (older && Date.now() < thread.olderRetryAt) return;
+    const seq = ++thread.seq;
     thread.loading = true;
+    thread.older = older;
     thread.loadingSince = Date.now();
+    const t = this.threads[conv];
     try {
       const v = await this.call("messages", args);
-      const t = this.threads[conv];
       const msgs: Message[] = v.messages ?? [];
       if (older || !t.loaded) t.more = !!v.more;
       t.loaded = true;
       for (const m of msgs) upsertMessage(t.msgs, m);
     } catch (e) {
-      this.showToast(`Couldn't load messages: ${e}`);
+      // A background refresh failing (the phone was slow) costs nothing:
+      // the thread still has what it showed. Say so only for what the user asked for.
+      if (older) t.olderRetryAt = Date.now() + 15000;
+      if (older || !t.loaded) this.showToast(`Couldn't load messages: ${e}`);
+      if (!t.loaded) t.loaded = true;
     } finally {
-      this.threads[conv].loading = false;
+      if (t.seq === seq) {
+        t.loading = false;
+        t.older = false;
+      }
     }
   }
 
@@ -546,7 +562,7 @@ export class AppState {
     const tmp = `tmp_${tmpID}`;
     const name = attachment?.split(/[\\/]/).pop() ?? "";
     const shown = attachment ? (text ? `📎 ${name}\n${text}` : `📎 ${name}`) : text;
-    const thread = (this.threads[conv] ??= { msgs: [], more: false, loading: false, loaded: true, loadingSince: 0 });
+    const thread = (this.threads[conv] ??= { msgs: [], more: false, loading: false, older: false, loaded: true, loadingSince: 0, seq: 0, olderRetryAt: 0 });
     thread.msgs.push({
       id: tmp,
       tmp_id: tmpID,
@@ -702,6 +718,7 @@ export class AppState {
   logout() {
     void this.call("logout");
     this.convs = [];
+    this.contacts = [];
     this.threads = {};
     this.selected = null;
     this.settingsOpen = false;
@@ -720,19 +737,38 @@ export class AppState {
   openNewChat() {
     this.settingsOpen = false;
     this.newChat = { query: "", index: 0, busy: false, error: null };
+    // Show the last list from disk right away: the phone can take a while
+    // (or never answer) and typing a number must not wait on it.
+    if (!this.contacts.length) {
+      this.call("contacts_cached").then(
+        (list: Contact[] | null) => {
+          if (!this.contacts.length && list?.length) this.setContacts(list);
+        },
+        () => {},
+      );
+    }
+    this.refreshContacts();
+  }
+
+  refreshContacts() {
+    if (this.contactsLoading) return;
     this.contactsLoading = true;
     this.contactsError = null;
     this.call("contacts").then(
       (list: Contact[]) => {
-        this.contacts = list ?? [];
+        this.setContacts(list ?? []);
         this.contactsLoading = false;
-        for (const c of this.contacts) this.wantAvatar(c.avatar_id);
       },
       (e) => {
         this.contactsLoading = false;
         this.contactsError = `Couldn't load contacts: ${e}`;
       },
     );
+  }
+
+  private setContacts(list: Contact[]) {
+    this.contacts = list;
+    for (const c of list) this.wantAvatar(c.avatar_id);
   }
 
   contactMatches(query: string): Contact[] {

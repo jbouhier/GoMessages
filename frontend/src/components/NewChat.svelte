@@ -54,11 +54,17 @@
         <div><div>Text {typedNumber}</div></div>
       </button>
     {/if}
-    {#if app.contactsLoading}
+    {#if app.contactsError}
+      <p class="center" class:error={!app.contacts.length} class:subtle={app.contacts.length}>
+        {app.contacts.length ? "Showing saved contacts. The phone didn't send an update." : app.contactsError}
+        <button class="link" onclick={() => app.refreshContacts()}>Retry</button>
+      </p>
+    {:else if app.contactsLoading && !app.contacts.length}
       <p class="center subtle">Loading phone contacts…</p>
-    {:else if app.contactsError}
-      <p class="center error">{app.contactsError}</p>
-    {:else if !matches.length}
+    {/if}
+    {#if app.contacts.length && !matches.length}
+      <p class="center subtle">No matching contacts</p>
+    {:else if !app.contacts.length && !app.contactsLoading && !app.contactsError}
       <p class="center subtle">{nc.query ? "No matching contacts" : "No contacts available"}</p>
     {/if}
     {#each matches as c, i (c.number + c.name)}
@@ -157,5 +163,12 @@
   }
   .error {
     color: var(--danger);
+  }
+  .link {
+    color: var(--accent);
+    margin-left: 6px;
+  }
+  .link:hover {
+    text-decoration: underline;
   }
 </style>

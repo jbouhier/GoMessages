@@ -246,7 +246,7 @@
         <div class="center"><div class="spinner"></div></div>
       {:else}
         <div class="top">
-          {#if thread.loading}
+          {#if thread.loading && thread.older}
             <div class="spinner"></div>
           {:else if !thread.more && msgs.length}
             <span class="subtle small">Beginning of conversation</span>

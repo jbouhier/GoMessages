@@ -183,6 +183,8 @@ func (d *demo) handle(ctx context.Context, cmd string, raw json.RawMessage) (any
 		return map[string]string{"state": d.state, "account": "demo@gmail.com"}, nil
 	case "check_cookies":
 		return map[string]string{"account": "demo@gmail.com"}, nil
+	case "contacts_cached":
+		return nil, nil
 	case "contacts":
 		return []map[string]any{
 			{"name": "Oliver Bennett", "number": "+15551230101", "formatted_number": "+1 555 123 0101", "top": true, "avatar_id": "p4"},
