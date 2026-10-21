@@ -1,0 +1,43 @@
+---
+interface Props {
+  title: string;
+  lede?: string;
+  id?: string;
+}
+const { title, lede, id } = Astro.props;
+---
+
+<section class="gm-section not-content" id={id}>
+  <header>
+    <h2>{title}</h2>
+    {lede && <p>{lede}</p>}
+  </header>
+  <slot />
+</section>
+
+<style>
+  .gm-section {
+    margin-top: clamp(4.5rem, 10vw, 7.5rem);
+  }
+  header {
+    max-width: 40rem;
+    margin: 0 auto;
+    text-align: center;
+  }
+  h2 {
+    margin: 0;
+    font-size: clamp(1.875rem, 1.3rem + 2.2vw, 2.75rem);
+    line-height: 1.08;
+    letter-spacing: -0.035em;
+    font-weight: 720;
+    color: var(--sl-color-white);
+    text-wrap: balance;
+  }
+  p {
+    margin: 0.875rem auto 0;
+    font-size: 1.0625rem;
+    line-height: 1.55;
+    color: var(--gm-subtext);
+    text-wrap: balance;
+  }
+</style>

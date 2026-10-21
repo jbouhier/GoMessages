@@ -1,0 +1,237 @@
+---
+// Live theme picker. Reads the app's own theme files, so a new theme in
+// frontend/src/themes shows up here once it has screenshots.
+interface Palette { base: string; mantle: string; accent: string; text: string }
+interface Theme { id: string; name: string; order?: number; credit?: string; light: Palette; dark: Palette }
+
+const files = import.meta.glob<{ default: Theme }>('../../../frontend/src/themes/*.json', { eager: true });
+const themes = Object.entries(files)
+  .filter(([path]) => !path.endsWith('theme.schema.json'))
+  .map(([, mod]) => mod.default)
+  .filter((t) => t.light && t.dark)
+  .sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const src = (id: string, mode: string) => `${base}/product/windows/${id}-${mode}.webp`;
+const first = themes[0];
+---
+
+<div class="gm-themes not-content" data-gm-themes>
+  <div class="bar">
+    <div class="chips" role="radiogroup" aria-label="Theme">
+      {themes.map((t, i) => (
+        <button
+          type="button"
+          role="radio"
+          aria-checked={i === 0 ? 'true' : 'false'}
+          data-id={t.id}
+          data-name={t.name}
+          data-credit={t.credit ?? ''}
+          style={`--l-base:${t.light.base};--l-accent:${t.light.accent};--d-base:${t.dark.base};--d-accent:${t.dark.accent}`}
+        >
+          <span class="swatch" aria-hidden="true"></span>
+          {t.name}
+        </button>
+      ))}
+    </div>
+    <div class="mode" role="radiogroup" aria-label="Side">
+      <button type="button" role="radio" data-mode="light" aria-checked="false">Light</button>
+      <button type="button" role="radio" data-mode="dark" aria-checked="true">Dark</button>
+    </div>
+  </div>
+
+  <figure class="stage" style={`--glow:${first.dark.accent}`}>
+    <img data-shot src={src(first.id, 'dark')} alt={`${first.name} theme, dark side`} width="1600" height="1000" loading="lazy" />
+    <figcaption><strong data-cap-name>{first.name}</strong> <span data-cap-credit>{first.credit ?? ''}</span></figcaption>
+  </figure>
+
+  {/* Theme accents for the glow, keyed by id and side. */}
+  <script type="application/json" data-accents set:html={JSON.stringify(Object.fromEntries(themes.map((t) => [t.id, { light: t.light.accent, dark: t.dark.accent }])))} />
+  <span hidden data-src-pattern={src('{id}', '{mode}')}></span>
+</div>
+
+<style>
+  .gm-themes {
+    margin-top: 1.5rem;
+  }
+  .bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+  }
+  button {
+    font: inherit;
+    cursor: pointer;
+    border: 0;
+  }
+  .chips button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    height: 2.25rem;
+    padding: 0 0.875rem 0 0.4375rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--sl-color-gray-2);
+    background: var(--gm-surface0);
+    box-shadow: inset 0 0 0 1px transparent;
+    transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  }
+  .chips button:hover {
+    background: var(--gm-hover);
+    color: var(--sl-color-white);
+  }
+  .chips button[aria-checked='true'] {
+    background: var(--gm-base);
+    color: var(--sl-color-white);
+    font-weight: 600;
+    box-shadow: inset 0 0 0 1.5px var(--gm-accent);
+  }
+  .swatch {
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--l-accent) 50%, var(--d-accent) 50%);
+    box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--gm-base) 35%, transparent), 0 0 0 1px var(--gm-edge);
+  }
+
+  .mode {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 999px;
+    background: var(--gm-surface0);
+  }
+  .mode button {
+    height: 1.875rem;
+    padding: 0 0.875rem;
+    border-radius: 999px;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--gm-subtext);
+    background: transparent;
+  }
+  .mode button[aria-checked='true'] {
+    background: var(--gm-base);
+    color: var(--sl-color-white);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15), inset 0 0 0 1px var(--gm-edge);
+  }
+  button:focus-visible {
+    outline: 2px solid var(--gm-accent);
+    outline-offset: 2px;
+  }
+
+  .stage {
+    position: relative;
+    margin: 0;
+  }
+  .stage::before {
+    content: '';
+    position: absolute;
+    inset: 8% 10% -4%;
+    z-index: -1;
+    background: var(--glow);
+    filter: blur(70px);
+    opacity: 0.35;
+    border-radius: 50%;
+    transition: background 0.4s;
+  }
+  .stage img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1600 / 1000;
+    border-radius: 14px;
+    box-shadow: var(--gm-shadow), inset 0 0 0 1px var(--gm-edge);
+    background: var(--gm-surface0);
+  }
+  figcaption {
+    margin-top: 0.875rem;
+    font-size: 0.875rem;
+    color: var(--gm-subtext);
+    text-align: center;
+  }
+  figcaption strong {
+    color: var(--sl-color-white);
+    font-weight: 600;
+  }
+  @media (max-width: 40rem) {
+    .bar {
+      flex-direction: column-reverse;
+      align-items: stretch;
+    }
+    .chips {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      margin-inline: -1rem;
+      padding: 2px 1rem;
+      scrollbar-width: none;
+    }
+    .chips button {
+      flex: none;
+    }
+    .mode {
+      align-self: flex-start;
+    }
+  }
+</style>
+
+<script>
+  for (const root of document.querySelectorAll<HTMLElement>('[data-gm-themes]')) {
+    const img = root.querySelector<HTMLImageElement>('[data-shot]')!;
+    const stage = root.querySelector<HTMLElement>('.stage')!;
+    const nameEl = root.querySelector('[data-cap-name]')!;
+    const creditEl = root.querySelector('[data-cap-credit]')!;
+    const pattern = root.querySelector<HTMLElement>('[data-src-pattern]')!.dataset.srcPattern!;
+    const accents = JSON.parse(root.querySelector('[data-accents]')!.textContent!);
+    const chips = [...root.querySelectorAll<HTMLButtonElement>('.chips button')];
+    const modes = [...root.querySelectorAll<HTMLButtonElement>('.mode button')];
+
+    let id = chips[0].dataset.id!;
+    // Start on the side the site is showing.
+    let mode = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+
+    const url = (i: string, m: string) => pattern.replace('{id}', i).replace('{mode}', m);
+
+    function render() {
+      const chip = chips.find((c) => c.dataset.id === id)!;
+      chips.forEach((c) => c.setAttribute('aria-checked', String(c === chip)));
+      modes.forEach((b) => b.setAttribute('aria-checked', String(b.dataset.mode === mode)));
+      img.src = url(id, mode);
+      img.alt = `${chip.dataset.name} theme, ${mode} side`;
+      nameEl.textContent = chip.dataset.name!;
+      creditEl.textContent = chip.dataset.credit ?? '';
+      stage.style.setProperty('--glow', accents[id][mode]);
+    }
+
+    chips.forEach((c, i) => {
+      c.addEventListener('click', () => { id = c.dataset.id!; render(); });
+      c.addEventListener('keydown', (e) => {
+        const d = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+        if (!d) return;
+        e.preventDefault();
+        const next = chips[(i + d + chips.length) % chips.length];
+        next.focus();
+        next.click();
+      });
+    });
+    modes.forEach((b) => b.addEventListener('click', () => { mode = b.dataset.mode!; render(); }));
+
+    // Warm the cache so switching feels instant.
+    const warm = () => chips.forEach((c) => ['light', 'dark'].forEach((m) => { new Image().src = url(c.dataset.id!, m); }));
+    new IntersectionObserver((entries, obs) => {
+      if (entries.some((e) => e.isIntersecting)) { warm(); obs.disconnect(); }
+    }, { rootMargin: '200px' }).observe(root);
+
+    render();
+  }
+</script>

@@ -1,0 +1,543 @@
+/* GoMessages docs. Same palette as the app's Default theme
+   (frontend/src/themes/default.json), same rows, pills, and glass. */
+
+:root {
+  --sl-font: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --sl-font-mono: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* Dark (Default theme, dark side) */
+  --gm-base: #131314;
+  --gm-mantle: #1b1b1d;
+  --gm-surface0: #232427;
+  --gm-surface1: #2e3033;
+  --gm-text: #e3e3e3;
+  --gm-subtext: #9aa0a6;
+  --gm-accent: #a8c7fa;
+  --gm-on-accent: #062e6f;
+  --gm-hover: #232427;
+  --gm-selected: #004a77;
+  --gm-on-selected: #d3e3fd;
+  --gm-glass: color-mix(in srgb, var(--gm-base) 72%, transparent);
+  --gm-edge: rgba(255, 255, 255, 0.08);
+  --gm-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 30px 80px -20px rgba(0, 0, 0, 0.7),
+    0 12px 30px -10px rgba(0, 0, 0, 0.5);
+
+  --sl-color-white: #f5f5f5;
+  --sl-color-gray-1: #e3e3e3;
+  --sl-color-gray-2: #c4c7c5;
+  --sl-color-gray-3: #9aa0a6;
+  --sl-color-gray-4: #6f7378;
+  --sl-color-gray-5: #2e3033;
+  --sl-color-gray-6: #1b1b1d;
+  --sl-color-black: #131314;
+
+  --sl-color-accent-low: #0e2a47;
+  --sl-color-accent: #7cacf8;
+  --sl-color-accent-high: #a8c7fa;
+  --sl-color-text-accent: var(--gm-accent);
+  --sl-color-bg-nav: var(--gm-glass);
+  --sl-color-bg-sidebar: var(--gm-base);
+  --sl-color-hairline: #26272a;
+  --sl-color-hairline-light: #2e3033;
+  --sl-color-hairline-shade: #26272a;
+  --sl-color-bg-inline-code: var(--gm-surface0);
+
+  --sl-text-h1: 2.5rem;
+  --sl-text-h2: 1.625rem;
+  --sl-text-h3: 1.25rem;
+  --sl-text-h4: 1.0625rem;
+  --sl-text-body: 0.96875rem;
+  --sl-line-height: 1.7;
+  --sl-content-width: 46rem;
+  --sl-sidebar-width: 16.5rem;
+  --sl-nav-height: 3.75rem;
+
+  --gm-radius: 14px;
+  --gm-row: 10px;
+}
+
+:root[data-theme='light'] {
+  --gm-base: #ffffff;
+  --gm-mantle: #f3f6fc;
+  --gm-surface0: #f0f2f5;
+  --gm-surface1: #e1e3e1;
+  --gm-text: #1f1f1f;
+  --gm-subtext: #5f6368;
+  --gm-accent: #0b57d0;
+  --gm-on-accent: #ffffff;
+  --gm-hover: #e6ecf6;
+  --gm-selected: #d3e3fd;
+  --gm-on-selected: #041e49;
+  --gm-edge: rgba(0, 0, 0, 0.07);
+  --gm-shadow: 0 0 0 1px rgba(16, 24, 40, 0.06), 0 30px 80px -24px rgba(30, 40, 90, 0.28),
+    0 12px 28px -12px rgba(30, 40, 90, 0.18);
+
+  --sl-color-white: #111112;
+  --sl-color-gray-1: #1f1f1f;
+  --sl-color-gray-2: #3c4043;
+  --sl-color-gray-3: #5f6368;
+  --sl-color-gray-4: #80868b;
+  --sl-color-gray-5: #e1e3e1;
+  --sl-color-gray-6: #f0f2f5;
+  --sl-color-gray-7: #f3f6fc;
+  --sl-color-black: #ffffff;
+
+  --sl-color-accent-low: #d3e3fd;
+  --sl-color-accent: #0b57d0;
+  --sl-color-accent-high: #0842a0;
+  --sl-color-bg-sidebar: var(--gm-mantle);
+  --sl-color-hairline: #eceef1;
+  --sl-color-hairline-light: #e1e3e1;
+  --sl-color-hairline-shade: #e6e8eb;
+}
+
+/* ---------- Type ---------- */
+
+body {
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, .sl-markdown-content :is(h1, h2, h3, h4) {
+  letter-spacing: -0.022em;
+  font-weight: 650;
+}
+h1#_top {
+  font-size: clamp(2rem, 1.4rem + 2vw, var(--sl-text-h1));
+  letter-spacing: -0.032em;
+  font-weight: 700;
+}
+.sl-markdown-content h2 {
+  margin-top: 2.75rem;
+  padding-top: 0;
+}
+.sl-markdown-content :is(p, li) {
+  color: var(--sl-color-gray-2);
+}
+.sl-markdown-content strong {
+  color: var(--sl-color-white);
+  font-weight: 600;
+}
+.sl-markdown-content a:not(.gm-btn, .gm-card) {
+  color: var(--gm-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  text-decoration-color: color-mix(in srgb, var(--gm-accent) 40%, transparent);
+}
+.sl-markdown-content a:not(.gm-btn, .gm-card):hover {
+  text-decoration-color: currentColor;
+}
+
+/* Page title area: no rule under it, quieter description. */
+.content-panel {
+  border-top: 0;
+}
+.content-panel + .content-panel {
+  border-top: 0;
+}
+
+/* ---------- Header: frosted glass, like the app's menus ---------- */
+
+.header {
+  -webkit-backdrop-filter: blur(20px) saturate(1.4);
+  backdrop-filter: blur(20px) saturate(1.4);
+  border-bottom: 1px solid var(--sl-color-hairline);
+}
+.site-title {
+  gap: 0.6rem;
+  font-weight: 650;
+  font-size: 1.0625rem;
+  letter-spacing: -0.02em;
+  color: var(--sl-color-white);
+}
+.site-title img {
+  height: 1.75rem;
+  width: auto;
+}
+
+/* Search: the app's "Search conversations" pill. */
+site-search button[data-open-modal] {
+  border-radius: 999px;
+}
+@media (min-width: 50rem) {
+  site-search button[data-open-modal] {
+    border: 1px solid transparent;
+    background: var(--gm-surface0);
+    color: var(--gm-subtext);
+    height: 2.375rem;
+    padding-inline: 1rem 0.5rem;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  site-search button[data-open-modal]:hover {
+    border-color: var(--sl-color-hairline-light);
+    background: var(--gm-hover);
+    color: var(--gm-text);
+  }
+}
+site-search button > kbd {
+  background: var(--gm-base);
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 6px;
+  padding-block: 0.125rem;
+}
+site-search dialog {
+  border-radius: 16px;
+  background: var(--gm-mantle);
+  border-color: var(--sl-color-hairline-light);
+}
+
+starlight-theme-select select,
+starlight-lang-select select {
+  border-radius: 999px;
+}
+
+/* ---------- Sidebar: the app's conversation list rows ---------- */
+
+.sidebar-pane {
+  background: var(--sl-color-bg-sidebar);
+  border-inline-end: 1px solid var(--sl-color-hairline);
+}
+@media (min-width: 50rem) {
+  .sidebar-pane {
+    border-inline-end: 1px solid var(--sl-color-hairline);
+  }
+}
+.sidebar-content {
+  padding-top: 1.25rem;
+}
+.sidebar-content ul ul li {
+  border-inline-start: 0;
+  margin-inline-start: 0;
+  padding-inline-start: 0;
+}
+.sidebar-content .top-level > li + li {
+  margin-top: 1.25rem;
+}
+.sidebar-content summary {
+  padding: 0 0.75rem 0.375rem;
+  cursor: default;
+}
+.sidebar-content summary .large {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gm-subtext);
+}
+.sidebar-content summary .caret {
+  display: none;
+}
+.sidebar-content a {
+  border-radius: var(--gm-row);
+  padding: 0.4375rem 0.75rem;
+  color: var(--sl-color-gray-2);
+  font-size: 0.875rem;
+  font-weight: 450;
+  transition: background 0.12s, color 0.12s;
+}
+.sidebar-content a:hover,
+.sidebar-content a:focus-visible {
+  background: var(--gm-hover);
+  color: var(--sl-color-white);
+}
+.sidebar-content a[aria-current='page'],
+.sidebar-content a[aria-current='page']:hover {
+  background: var(--gm-selected);
+  color: var(--gm-on-selected);
+  font-weight: 600;
+}
+.sidebar-content ul ul li + li {
+  margin-top: 1px;
+}
+
+/* ---------- Table of contents ---------- */
+
+starlight-toc h2,
+mobile-starlight-toc h2 {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--gm-subtext);
+}
+starlight-toc a {
+  border-radius: 8px;
+  color: var(--gm-subtext);
+}
+starlight-toc a:hover {
+  color: var(--sl-color-white);
+}
+starlight-toc a[aria-current='true'] {
+  color: var(--gm-accent);
+  font-weight: 600;
+}
+.right-sidebar {
+  border-inline-start: 0;
+}
+
+/* ---------- Content blocks ---------- */
+
+.sl-markdown-content img {
+  border-radius: var(--gm-radius);
+  box-shadow: var(--gm-shadow);
+}
+
+.sl-markdown-content :not(pre) > code {
+  background: var(--gm-surface0);
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 6px;
+  padding: 0.1em 0.4em;
+  font-size: 0.85em;
+}
+
+/* Shortcut keys in tables read like the app's <kbd>. */
+.sl-markdown-content td code,
+.sl-markdown-content kbd {
+  font-family: var(--__sl-font);
+  font-weight: 500;
+  background: var(--gm-base);
+  border: 1px solid var(--sl-color-hairline-light);
+  border-bottom-width: 2px;
+  border-radius: 7px;
+  padding: 0.15em 0.5em;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+}
+
+.sl-markdown-content table {
+  display: table;
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: var(--gm-radius);
+  overflow: hidden;
+  font-size: 0.90625rem;
+}
+.sl-markdown-content :is(th, td) {
+  border: 0;
+  border-bottom: 1px solid var(--sl-color-hairline-light);
+  padding: 0.7rem 1rem;
+}
+.sl-markdown-content tr:last-child td {
+  border-bottom: 0;
+}
+.sl-markdown-content th {
+  background: var(--gm-mantle);
+  color: var(--gm-subtext);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.sl-markdown-content tbody tr:hover td {
+  background: color-mix(in srgb, var(--gm-hover) 60%, transparent);
+}
+@media (max-width: 40rem) {
+  .sl-markdown-content table {
+    display: block;
+    overflow-x: auto;
+  }
+}
+
+.sl-markdown-content ol > li::marker {
+  color: var(--gm-subtext);
+  font-weight: 600;
+}
+
+.starlight-aside {
+  border: 0;
+  border-radius: var(--gm-radius);
+  padding: 1rem 1.25rem;
+  background: var(--gm-mantle);
+  box-shadow: inset 3px 0 0 var(--sl-color-asides-border);
+}
+
+/* Prev / next */
+.pagination-links a {
+  border-radius: var(--gm-radius);
+  border: 1px solid var(--sl-color-hairline-light);
+  box-shadow: none;
+  transition: border-color 0.15s, background 0.15s;
+}
+.pagination-links a:hover {
+  border-color: var(--gm-accent);
+  background: var(--gm-mantle);
+}
+.pagination-links .link-title {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* ---------- Buttons (the app's .primary / .secondary pills) ---------- */
+
+.gm-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  height: 2.875rem;
+  padding: 0 1.375rem;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.96875rem;
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: transform 0.15s, background 0.15s, box-shadow 0.15s, color 0.15s;
+}
+.gm-btn svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex: none;
+}
+.gm-btn.primary {
+  background: var(--gm-accent);
+  color: var(--gm-on-accent);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 8px 24px -8px color-mix(in srgb, var(--gm-accent) 70%, transparent);
+}
+.gm-btn.primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.25) inset,
+    0 12px 28px -8px color-mix(in srgb, var(--gm-accent) 80%, transparent);
+}
+.gm-btn.secondary {
+  background: color-mix(in srgb, var(--gm-base) 60%, transparent);
+  color: var(--sl-color-white);
+  box-shadow: inset 0 0 0 1px var(--sl-color-hairline-light);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+.gm-btn.secondary:hover {
+  background: var(--gm-hover);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gm-btn {
+    transition: none;
+  }
+}
+
+/* ---------- Landing ---------- */
+
+[data-has-hero] .main-frame {
+  overflow-x: clip;
+}
+[data-has-hero] .content-panel {
+  padding-top: 0;
+}
+[data-has-hero] .sl-container {
+  max-width: 72rem;
+}
+/* Splash pages have no sidebar: hide the empty footer chrome. */
+[data-has-hero] footer .meta,
+[data-has-hero] .pagination-links {
+  display: none;
+}
+
+.gm-steps {
+  list-style: none;
+  margin: 2.5rem 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+}
+.gm-steps li {
+  margin: 0;
+  padding: 1.25rem 1.25rem 1.5rem;
+  border-radius: 20px;
+  background: var(--gm-mantle);
+  box-shadow: inset 0 0 0 1px var(--gm-edge);
+}
+.gm-steps h3 {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin: 1rem 0 0;
+  font-size: 1.0625rem;
+  font-weight: 650;
+  letter-spacing: -0.015em;
+  color: var(--sl-color-white);
+}
+.gm-steps .n {
+  display: grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--gm-selected);
+  color: var(--gm-on-selected);
+}
+.gm-steps a {
+  color: inherit;
+  text-decoration: none;
+}
+.gm-steps a::after {
+  content: ' →';
+  color: var(--gm-accent);
+}
+.gm-steps a:hover {
+  color: var(--gm-accent);
+}
+@media (max-width: 48rem) {
+  .gm-steps {
+    grid-template-columns: 1fr;
+  }
+}
+
+.gm-cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  margin-top: clamp(4.5rem, 10vw, 7.5rem);
+  padding: clamp(3rem, 7vw, 5rem) 1.5rem;
+  border-radius: 28px;
+  text-align: center;
+  background:
+    radial-gradient(50% 80% at 15% 0%, #d6e2ff, transparent 70%),
+    radial-gradient(50% 80% at 85% 0%, #fde2d2, transparent 70%),
+    radial-gradient(60% 80% at 50% 100%, #e6cdf2, transparent 70%),
+    var(--gm-mantle);
+  box-shadow: inset 0 0 0 1px var(--gm-edge);
+}
+:root[data-theme='dark'] .gm-cta {
+  background:
+    radial-gradient(50% 80% at 15% 0%, #22357f, transparent 70%),
+    radial-gradient(50% 80% at 85% 0%, #4a2378, transparent 70%),
+    radial-gradient(60% 80% at 50% 100%, #0f4a6b, transparent 70%),
+    var(--gm-mantle);
+}
+.gm-cta h2 {
+  margin: 0;
+  font-size: clamp(1.875rem, 1.3rem + 2.4vw, 3rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  font-weight: 750;
+  color: var(--sl-color-white);
+  text-wrap: balance;
+}
+.gm-cta p {
+  margin: 0.75rem 0 0;
+  font-size: 1.0625rem;
+  color: var(--sl-color-gray-2);
+}
+.gm-cta .actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1.75rem;
+}
+
+.gm-legal {
+  max-width: 40rem;
+  margin: 3rem auto 1rem;
+  text-align: center;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--gm-subtext);
+}

@@ -1,0 +1,30 @@
+---
+// Adds a Docs link before the GitHub icon in the header.
+import Default from '@astrojs/starlight/components/SocialIcons.astro';
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const isDocs = !Astro.locals.starlightRoute.entry.data.hero;
+---
+
+<a class="gm-nav-link" href={`${base}/getting-started/`} aria-current={isDocs ? 'page' : undefined}>Docs</a>
+<Default />
+
+<style>
+  .gm-nav-link {
+    padding: 0.375rem 0.75rem;
+    border-radius: 999px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--sl-color-gray-2);
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+  }
+  .gm-nav-link:hover {
+    background: var(--gm-hover);
+    color: var(--sl-color-white);
+  }
+  .gm-nav-link[aria-current='page'] {
+    color: var(--sl-color-white);
+    font-weight: 600;
+  }
+</style>

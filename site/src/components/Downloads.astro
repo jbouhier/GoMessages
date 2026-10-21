@@ -1,0 +1,114 @@
+---
+const repo = 'https://github.com/jbouhier/GoMessages/releases/latest/download';
+const items = [
+  { os: 'mac', name: 'Mac', note: 'Apple Silicon (M1 and later)', file: 'GoMessages-macos-aarch64.dmg' },
+  { os: 'windows', name: 'Windows', note: 'Windows 10 and 11, x64', file: 'GoMessages-windows-x86_64.zip' },
+  { os: 'linux', name: 'Linux', note: 'x64, GTK 4 and WebKitGTK 6.0', file: 'GoMessages-linux-x86_64.tar.gz' },
+];
+---
+
+<div class="gm-dl not-content">
+  {items.map((i) => (
+    <a class="card" href={`${repo}/${i.file}`} data-os={i.os}>
+      <span class="yours">Your computer</span>
+      <span class="name">{i.name}</span>
+      <span class="note">{i.note}</span>
+      <code>{i.file}</code>
+      <span class="go">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9.5m0 0 4-4m-4 4-4-4M4 15.5h12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+        Download
+      </span>
+    </a>
+  ))}
+</div>
+
+<style>
+  .gm-dl {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    margin-top: 1.5rem;
+  }
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem;
+    border-radius: 16px;
+    background: var(--gm-mantle);
+    box-shadow: inset 0 0 0 1px var(--gm-edge);
+    text-decoration: none;
+    transition: box-shadow 0.15s, transform 0.15s;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: inset 0 0 0 1.5px var(--gm-accent);
+  }
+  .card.mine {
+    box-shadow: inset 0 0 0 1.5px var(--gm-accent);
+    background: color-mix(in srgb, var(--gm-selected) 35%, var(--gm-mantle));
+  }
+  .yours {
+    display: none;
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    padding: 0.125rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    background: var(--gm-accent);
+    color: var(--gm-on-accent);
+  }
+  .mine .yours {
+    display: block;
+  }
+  .name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--sl-color-white);
+  }
+  .note {
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+    color: var(--gm-subtext);
+  }
+  code {
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    color: var(--gm-subtext);
+    word-break: break-all;
+  }
+  .go {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    margin-top: 1rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--gm-accent);
+  }
+  .go svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  @media (max-width: 48rem) {
+    .gm-dl {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  const ua = navigator.userAgent.toLowerCase();
+  const p = ((navigator as any).userAgentData?.platform || navigator.platform || ua).toLowerCase();
+  const os = /android|iphone|ipad/.test(ua) ? null : p.includes('mac') ? 'mac' : p.includes('win') ? 'windows' : p.includes('linux') ? 'linux' : null;
+  if (os) {
+    const card = document.querySelector<HTMLElement>(`.gm-dl [data-os="${os}"]`);
+    if (card) {
+      card.classList.add('mine');
+      card.parentElement!.prepend(card);
+    }
+  }
+</script>

@@ -1,62 +1,58 @@
 ---
 title: GoMessages
 description: Google Messages for Mac, Windows, and Linux. A real desktop app.
+template: splash
+hero:
+  title: Your texts, on your desktop.
+  tagline: Every conversation. Every desktop.
+  actions:
+    - text: Download
+      link: /GoMessages/downloads/
+      variant: primary
+    - text: Read the docs
+      link: /GoMessages/getting-started/
+      variant: secondary
 ---
 
-Google Messages for Mac, Windows, and Linux. Your conversations in a fast,
-keyboard-friendly desktop app, paired with your Android phone.
+import Section from '../../components/Section.astro';
+import Features from '../../components/Features.astro';
+import ThemeGallery from '../../components/ThemeGallery.astro';
+import DownloadButton from '../../components/DownloadButton.astro';
+import Illustration from '../../components/Illustration.astro';
 
-<video controls autoplay muted loop playsinline preload="metadata" poster="/GoMessages/product/launch-poster.jpg" width="1920" height="1080" style={{ width: "100%", height: "auto", borderRadius: "0.5rem" }}>
-  <source src="/GoMessages/product/launch.mp4" type="video/mp4" />
-  <a href="/GoMessages/product/launch.mp4">Watch the tour</a>
-</video>
+<Section title="Made for the keyboard.">
+  <Features />
+</Section>
 
-<img src="/GoMessages/product/hero.jpg" alt="GoMessages with a conversation open" width="2400" height="1500" />
+<Section title="Eight themes. Light and dark.">
+  <ThemeGallery />
+</Section>
 
-*Sample conversation from the app's demo mode.*
+<Section title="Three steps. One minute.">
+  <ol class="gm-steps">
+    <li>
+      <Illustration name="download" />
+      <h3><span class="n">1</span><a href="/GoMessages/downloads/">Download</a></h3>
+    </li>
+    <li>
+      <Illustration name="signin" />
+      <h3><span class="n">2</span>Sign in with Google</h3>
+    </li>
+    <li>
+      <Illustration name="pair" />
+      <h3><span class="n">3</span><a href="/GoMessages/pairing/">Tap the emoji</a></h3>
+    </li>
+  </ol>
+</Section>
 
-- **Everything you need**: photos and files, reactions, replies, typing
-  indicators, archive, search, and new chats from your contacts.
-- **Keyboard first**: `Cmd+K` jumps to anyone, and every action has a
-  shortcut.
-- **Themes**: eight of them, light and dark, with see-through windows if
-  you like.
-- **Notifications** with or without a preview, and mute per conversation.
-- **Private**: no telemetry. Messages stay between your computer, Google,
-  and your phone.
+<div class="gm-cta not-content">
+  <h2>Leave your phone in your pocket.</h2>
+  <div class="actions">
+    <DownloadButton />
+    <a class="gm-btn secondary" href="https://github.com/jbouhier/GoMessages">View on GitHub</a>
+  </div>
+</div>
 
-## Tour
-
-Press `Cmd+K`, type a few letters, hit Enter.
-
-<img src="/GoMessages/product/quick-switcher.jpg" alt="Jump to anyone with Cmd+K" width="2400" height="1500" />
-
-Every action has a shortcut. `Cmd+/` lists them all.
-
-<img src="/GoMessages/product/shortcuts.jpg" alt="Shortcuts for everything" width="2400" height="1500" />
-
-Photos open full size. Zoom, copy, save, or flip through with the arrow keys.
-
-<img src="/GoMessages/product/photos.jpg" alt="See it big" width="2400" height="1500" />
-
-Pick a theme, light or dark, gradient or solid, see-through or not.
-
-<img src="/GoMessages/product/settings.jpg" alt="Make it yours" width="2400" height="1500" />
-
-No telemetry. Messages stay between your computer, Google, and your phone.
-
-<img src="/GoMessages/product/privacy.jpg" alt="Your messages stay yours" width="2400" height="1500" />
-
-## Get started
-
-1. [Download](/GoMessages/downloads/) the app for your computer.
-2. Choose **Sign in with Google**.
-3. Tap the matching emoji on your phone. Done, it stays signed in.
-
-Next: [pairing details](/GoMessages/pairing/),
-[shortcuts](/GoMessages/shortcuts/), and [settings](/GoMessages/settings/).
-Stuck? See [troubleshooting](/GoMessages/troubleshooting/).
-
-GoMessages is an unofficial open-source project. Not affiliated with,
-endorsed, or sponsored by Google. Google Messages is a trademark of Google
-LLC.
+<p class="gm-legal">
+  GoMessages is an unofficial open-source project. Not affiliated with, endorsed, or sponsored by Google. Google Messages is a trademark of Google LLC.
+</p>

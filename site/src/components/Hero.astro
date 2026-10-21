@@ -1,0 +1,217 @@
+---
+// Replaces Starlight's hero on the landing page. Title, tagline, and actions
+// still come from the page's frontmatter.
+import DownloadButton from './DownloadButton.astro';
+
+const { data } = Astro.locals.starlightRoute.entry;
+const { title = data.title, tagline, actions = [] } = data.hero || {};
+const base = import.meta.env.BASE_URL.replace(/\/$/, '');
+const secondary = actions.find((a) => a.variant !== 'primary');
+---
+
+<section class="gm-hero" aria-labelledby="_top">
+  <div class="mesh" aria-hidden="true"></div>
+  <div class="copy">
+    <h1 id="_top" data-page-title set:html={title} />
+    {tagline && <p class="tagline" set:html={tagline} />}
+    <div class="actions">
+      <DownloadButton />
+      {secondary && (
+        <a class="gm-btn secondary" href={secondary.link}>
+          {secondary.text}
+        </a>
+      )}
+    </div>
+    <p class="platforms">
+      Mac (Apple Silicon) <span>·</span> Windows <span>·</span> Linux
+    </p>
+  </div>
+
+  <div class="window">
+    <video
+      data-hero-video
+      autoplay muted loop playsinline
+      preload="metadata"
+      poster={`${base}/product/windows/tour-poster.webp`}
+      width="1920" height="1080"
+      aria-label="GoMessages tour"
+    >
+      <source src={`${base}/product/launch.mp4`} type="video/mp4" />
+    </video>
+    <button class="toggle" type="button" data-hero-toggle aria-label="Pause video">
+      <svg class="pause" viewBox="0 0 16 16" aria-hidden="true"><rect x="4" y="3" width="2.6" height="10" rx="1"/><rect x="9.4" y="3" width="2.6" height="10" rx="1"/></svg>
+      <svg class="play" viewBox="0 0 16 16" aria-hidden="true"><path d="M5 3.2v9.6a.6.6 0 0 0 .9.5l7.6-4.8a.6.6 0 0 0 0-1L5.9 2.7a.6.6 0 0 0-.9.5z"/></svg>
+    </button>
+  </div>
+</section>
+
+<style>
+  .gm-hero {
+    position: relative;
+    isolation: isolate;
+    width: 100vw;
+    margin-inline: calc(50% - 50vw);
+    margin-top: calc(-1 * var(--sl-content-gap-y, 1rem) - 2rem);
+    padding: clamp(3.5rem, 8vw, 6.5rem) 1rem 0;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  /* The app's Aurora mesh, as CSS. */
+  .mesh {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background:
+      radial-gradient(38% 46% at 12% 8%, #d6e2ff 0%, transparent 70%),
+      radial-gradient(34% 40% at 88% 4%, #fde2d2 0%, transparent 70%),
+      radial-gradient(40% 40% at 70% 42%, #e6cdf2 0%, transparent 70%),
+      radial-gradient(36% 36% at 26% 50%, #cdeee6 0%, transparent 70%),
+      var(--gm-base);
+    mask-image: linear-gradient(to bottom, #000 55%, transparent 92%);
+  }
+  :global([data-theme='dark']) .mesh {
+    background:
+      radial-gradient(40% 46% at 12% 6%, #22357f 0%, transparent 70%),
+      radial-gradient(34% 40% at 88% 4%, #4a2378 0%, transparent 70%),
+      radial-gradient(42% 40% at 72% 44%, #102f63 0%, transparent 70%),
+      radial-gradient(36% 36% at 24% 52%, #0f4a6b 0%, transparent 70%),
+      var(--gm-base);
+    opacity: 0.85;
+  }
+
+  .copy {
+    max-width: 46rem;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+
+  h1 {
+    margin: 0;
+    font-size: clamp(2.5rem, 1.2rem + 5.4vw, 5rem);
+    line-height: 1.02;
+    letter-spacing: -0.045em;
+    font-weight: 750;
+    color: var(--sl-color-white);
+    text-wrap: balance;
+  }
+  .tagline {
+    margin: 1.25rem 0 0;
+    max-width: 36rem;
+    font-size: clamp(1.0625rem, 0.95rem + 0.5vw, 1.25rem);
+    line-height: 1.55;
+    color: var(--sl-color-gray-2);
+    text-wrap: balance;
+  }
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+  .platforms {
+    margin: 1rem 0 0;
+    font-size: 0.8125rem;
+    color: var(--gm-subtext);
+  }
+  .platforms span {
+    opacity: 0.5;
+    margin-inline: 0.25rem;
+  }
+
+  .window {
+    position: relative;
+    max-width: 68rem;
+    margin: clamp(3rem, 6vw, 4.5rem) auto 0;
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: var(--gm-shadow);
+    background: var(--gm-mantle);
+  }
+  .window video {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+  }
+  .window::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: inset 0 0 0 1px var(--gm-edge);
+    pointer-events: none;
+  }
+  .toggle {
+    position: absolute;
+    right: 0.875rem;
+    bottom: 0.875rem;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 0;
+    border-radius: 50%;
+    cursor: pointer;
+    color: #fff;
+    background: rgba(20, 20, 24, 0.45);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .window:hover .toggle,
+  .toggle:focus-visible,
+  .window.paused .toggle {
+    opacity: 1;
+  }
+  .toggle svg {
+    width: 0.875rem;
+    height: 0.875rem;
+    fill: currentColor;
+  }
+  .toggle .play,
+  .window.paused .toggle .pause {
+    display: none;
+  }
+  .window.paused .toggle .play {
+    display: block;
+  }
+  .toggle:focus-visible {
+    outline: 2px solid var(--gm-accent);
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 40rem) {
+    .window {
+      border-radius: 12px;
+    }
+    .toggle {
+      opacity: 1;
+    }
+  }
+</style>
+
+<script>
+  const video = document.querySelector<HTMLVideoElement>('[data-hero-video]');
+  const toggle = document.querySelector<HTMLButtonElement>('[data-hero-toggle]');
+  if (video && toggle) {
+    const box = video.parentElement!;
+    const sync = () => {
+      box.classList.toggle('paused', video.paused);
+      toggle.setAttribute('aria-label', video.paused ? 'Play video' : 'Pause video');
+    };
+    video.addEventListener('play', sync);
+    video.addEventListener('pause', sync);
+    toggle.addEventListener('click', () => (video.paused ? video.play() : video.pause()));
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) video.pause();
+    sync();
+  }
+</script>
