@@ -3,6 +3,8 @@
 Google Messages for Mac, Windows, and Linux.
 A real desktop app, fast and keyboard-friendly.
 
+[![Watch the tour (38 s)](./site/public/product/launch-play.jpg)](https://jbouhier.github.io/GoMessages/product/launch.mp4)
+
 ![GoMessages](./site/public/product/hero.jpg)
 
 - Your conversations, photos, reactions, and replies, in a desktop window.
