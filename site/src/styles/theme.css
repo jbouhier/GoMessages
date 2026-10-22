@@ -1,5 +1,5 @@
 /* GoMessages docs. Same palette as the app's Default theme
-   (frontend/src/themes/default.json), same rows, pills, and glass. */
+   (app/frontend/src/themes/default.json), same rows, pills, and glass. */
 
 :root {
   --sl-font: 'Inter Variable', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;

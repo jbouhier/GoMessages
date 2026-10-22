@@ -11,10 +11,10 @@ by [Wails v3](https://v3.wails.io). Details in [ARCHITECTURE](ARCHITECTURE.md).
 - macOS: `xcode-select --install`
 - Linux: `build-essential pkg-config libgtk-4-dev libwebkitgtk-6.0-dev`
 - Windows: nothing extra. WebView2 ships with Windows 10 and 11.
-- UI tests: Chrome for Testing (`cd frontend && bunx playwright-core install chromium`), or `$CHROME`
+- UI tests: Chrome for Testing (`cd app/frontend && bunx playwright-core install chromium`), or `$CHROME`
 - Website: [Bun](https://bun.sh)
 
-The Wails CLI matching `go.mod` is installed into `bin/tools` the first
+The Wails CLI matching `app/go.mod` is installed into `app/bin/tools` the first
 time a recipe needs it.
 
 ## Run it

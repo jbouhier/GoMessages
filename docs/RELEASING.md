@@ -1,6 +1,6 @@
 # Releasing
 
-The version lives in `build/config.yml` and the platform files generated
+The version lives in `app/build/config.yml` and the platform files generated
 from it. The release notes live in `CHANGELOG.md`.
 
 1. In `CHANGELOG.md`, rename `Unreleased` to the new version and date:
@@ -18,7 +18,7 @@ from it. The release notes live in `CHANGELOG.md`.
    - The gate runs `just lint` and `just test` on macOS.
    - Each platform builds and uploads its file to the GitHub release.
    - The release notes are that version's `CHANGELOG.md` section
-     (`scripts/release-notes.sh`).
+     (`app/scripts/release-notes.sh`).
 4. Follow it with `just release-status`.
 
 | Platform | File |

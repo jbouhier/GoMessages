@@ -1,15 +1,17 @@
 .DS_Store
 .task
 bin
-frontend/dist
-frontend/node_modules
-build/linux/appimage/build
-build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+app/dist/
+app/release-notes.md
+app/frontend/dist
+app/frontend/node_modules
+app/build/linux/appimage/build
+app/build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 # Mobile generated (per-machine; overlays hold absolute paths)
-build/ios/xcode/overlay.json
-build/ios/xcode/gen/
-build/android/overlay.json
-build/android/gen/
+app/build/ios/xcode/overlay.json
+app/build/ios/xcode/gen/
+app/build/android/overlay.json
+app/build/android/gen/
 # Output of the Rust app before 0.4.0
 /target/
 /dist/

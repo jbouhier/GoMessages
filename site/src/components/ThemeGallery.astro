@@ -1,10 +1,10 @@
 ---
 // Live theme picker. Reads the app's own theme files, so a new theme in
-// frontend/src/themes shows up here once it has screenshots.
+// app/frontend/src/themes shows up here once it has screenshots.
 interface Palette { base: string; mantle: string; accent: string; text: string }
 interface Theme { id: string; name: string; order?: number; credit?: string; light: Palette; dark: Palette }
 
-const files = import.meta.glob<{ default: Theme }>('../../../frontend/src/themes/*.json', { eager: true });
+const files = import.meta.glob<{ default: Theme }>('../../../app/frontend/src/themes/*.json', { eager: true });
 const themes = Object.entries(files)
   .filter(([path]) => !path.endsWith('theme.schema.json'))
   .map(([, mod]) => mod.default)

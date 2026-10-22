@@ -55,7 +55,7 @@ A theme is one JSON file with colors only. There is no CSS: a theme can't
 change the layout, load anything from the internet, or restyle parts of the
 app. That keeps every theme safe to use and the app consistent.
 
-Today, themes ship with the app: add a file to `frontend/src/themes/` and
+Today, themes ship with the app: add a file to `app/frontend/src/themes/` and
 open a pull request. Loading your own theme files from a folder, without
 building the app, is planned.
 
@@ -192,11 +192,11 @@ Practical advice:
 
 ### Trying a theme
 
-1. Add the file to `frontend/src/themes/`. Your editor checks it against
+1. Add the file to `app/frontend/src/themes/`. Your editor checks it against
    `theme.schema.json`.
 2. Run `just demo` and pick it in **Settings → Appearance**. Try both modes,
    both backgrounds, and Transparency at 0 and around 50%.
-3. Add its `id` to `THEME_IDS` in `frontend/e2e/ui.test.mjs` and run
+3. Add its `id` to `THEME_IDS` in `app/frontend/e2e/ui.test.mjs` and run
    `just test`. The contrast test lists every pair that falls short, with its
    ratio.
 4. Open a pull request with screenshots of both sides (`just tour /tmp/shots

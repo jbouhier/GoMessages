@@ -9,14 +9,17 @@ jobs:
   test:
     name: lint + test (macOS)
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: app
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version-file: go.mod
+          go-version-file: app/go.mod
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version-file: frontend/package.json
+          bun-version-file: app/frontend/package.json
       - uses: extractions/setup-just@v4
       - name: Chrome for the UI tests
         run: cd frontend && bun install --frozen-lockfile && bunx playwright-core install chromium
@@ -33,14 +36,15 @@ jobs:
     defaults:
       run:
         shell: bash
+        working-directory: app
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-go@v7
         with:
-          go-version-file: go.mod
+          go-version-file: app/go.mod
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version-file: frontend/package.json
+          bun-version-file: app/frontend/package.json
       - name: Linux webview deps
         if: runner.os == 'Linux'
         run: |

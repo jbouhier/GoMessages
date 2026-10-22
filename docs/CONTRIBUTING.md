@@ -16,8 +16,8 @@
 - **Go tests** (`*_test.go`): settings parsing and migration, model
   conversion. Decisions live in plain functions so they can be tested
   without a window or a phone.
-- **UI unit tests** (`frontend/test/`): pure TypeScript, Node's test runner.
-- **UI tests** (`frontend/e2e/ui.test.mjs`): the real Go backend on demo
+- **UI unit tests** (`app/frontend/test/`): pure TypeScript, Node's test runner.
+- **UI tests** (`app/frontend/e2e/ui.test.mjs`): the real Go backend on demo
   data, served over HTTP, driven in headless Chrome. They cover layout at
   every size and zoom, keyboard use, and WCAG AA contrast for every theme.
 

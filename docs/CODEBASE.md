@@ -1,6 +1,8 @@
 # Codebase
 
-## Go (repository root, `package main`)
+Two top-level folders: `app/` (the Go + Svelte desktop app) and `site/` (the website and user guide). Paths below are under `app/` unless they say otherwise.
+
+## Go (`app/`, `package main`)
 
 | File | What it holds |
 |---|---|
@@ -21,7 +23,7 @@
 | `appearance_*.go`, `zoom_*.go` | Window light/dark, behind-window blur, page zoom |
 | `*_test.go` | Go tests |
 
-## UI (`frontend/`)
+## UI (`app/frontend/`)
 
 | Path | What it holds |
 |---|---|
@@ -42,8 +44,8 @@
 
 | Path | What it holds |
 |---|---|
-| `build/` | Wails build config (`config.yml`), icons, Info.plist, Windows and Linux packaging |
-| `scripts/` | `install.sh` (macOS install), `bump.sh` (version), `release-notes.sh` (changelog section) |
+| `app/build/` | Wails build config (`config.yml`), icons, Info.plist, Windows and Linux packaging |
+| `app/scripts/` | `install.sh` (macOS install), `bump.sh` (version), `release-notes.sh` (changelog section) |
 | `site/` | The user guide (Starlight) |
 | `.github/workflows/` | CI, Release, Docs |
 

@@ -7,7 +7,7 @@ notifications, and dialogs.
 
 ```
 ┌──────────────── GoMessages ────────────────┐
-│ Svelte UI (frontend/)                      │
+│ Svelte UI (app/frontend/)                  │
 │   ↑ events "gm"         ↓ Messages.Call(…) │
 │ Wails service: Messages (service.go)       │
 │   ↓ backend interface (bridge.go)          │
@@ -70,13 +70,13 @@ Wails has no cookie API:
 On Windows and Linux, the web view handle is a private field of Wails'
 window. `webviewauth_native.go` reads it by name with `reflect`, so a Wails
 upgrade that renames it makes sign-in fail with a message, not crash.
-Check sign-in on both platforms after bumping Wails in `go.mod`.
+Check sign-in on both platforms after bumping Wails in `app/go.mod`.
 
 ## UI
 
-Svelte 5 with runes, built by Vite into `frontend/dist`, which is embedded
-in the binary. `frontend/src/lib/app.svelte.ts` holds the state: it calls
-`Messages` through the generated bindings (`frontend/bindings/`) and
+Svelte 5 with runes, built by Vite into `app/frontend/dist`, which is embedded
+in the binary. `app/frontend/src/lib/app.svelte.ts` holds the state: it calls
+`Messages` through the generated bindings (`app/frontend/bindings/`) and
 applies backend events. Themes are JSON files checked against
 `theme.schema.json` (see [THEMING](THEMING.md)).
 

@@ -1,4 +1,7 @@
 # GoMessages (Wails): Go backend + Svelte UI in one binary.
+# app/ is the desktop app, site/ the website. Recipes run from app/.
+
+set working-directory := "app"
 
 wails := "./bin/tools/wails3"
 
@@ -79,21 +82,21 @@ screenshot: build
     set -euo pipefail
     shots="$(mktemp -d)"
     just tour "$shots" light
-    cp "$shots/a-jb-light.png" site/public/product/desktop.png
-    cp "$shots/e-settings-light.png" site/public/product/settings.png
+    cp "$shots/a-jb-light.png" ../site/public/product/desktop.png
+    cp "$shots/e-settings-light.png" ../site/public/product/settings.png
     rm -rf "$shots"
 
 # Install the website's dependencies
 site-install:
-    cd site && bun install
+    cd ../site && bun install
 
 # Preview the website at localhost:4321
 site-dev:
-    cd site && bun run dev
+    cd ../site && bun run dev
 
 # Build the website
 site-build:
-    cd site && bun run build
+    cd ../site && bun run build
 
 # Set the app version everywhere (e.g. just bump 0.5.0)
 bump version:
@@ -104,7 +107,7 @@ bump version:
 release version:
     scripts/release-notes.sh {{version}} >/dev/null
     just bump {{version}}
-    git add build CHANGELOG.md
+    git add build ../CHANGELOG.md
     git commit -m "release: v{{version}}"
     git tag "v{{version}}"
     git push origin main

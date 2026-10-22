@@ -15,5 +15,5 @@ kill $mock
 python3 music.py
 node render.mjs
 ffmpeg -y -v error -i .work/silent.mp4 -i .work/music.wav -c:v copy -c:a aac -b:a 192k -shortest \
-  -movflags +faststart ../../../site/public/product/launch.mp4
+  -movflags +faststart ../../../../site/public/product/launch.mp4
 echo "wrote site/public/product/launch.mp4"
