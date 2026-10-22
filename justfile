@@ -34,7 +34,7 @@ dev: tools
 
 # Regenerate the TypeScript bindings after changing Go service methods
 bindings: tools
-    {{wails}} generate bindings -clean=true -ts
+    {{wails}} generate bindings -clean=true -ts -i
 
 # The .app bundle in bin/
 package: tools
