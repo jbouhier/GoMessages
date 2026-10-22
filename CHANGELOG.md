@@ -3,6 +3,23 @@
 What changed in each GoMessages release. The section for a version is also
 its release notes on GitHub.
 
+## [0.5.1] - 2026-10-22
+
+### Fixed
+
+- The app no longer gets stuck on launch with an empty conversation list
+  and a "phone isn't responding" warning while the phone is fine. It
+  happened when a message arrived before the app had loaded your
+  conversations.
+- Conversations load as soon as the app connects, instead of only after
+  the phone had dropped and come back.
+
+### Changed
+
+- GoMessages keeps a detailed log of each run in
+  ~/Library/Logs/GoMessages on macOS (the previous run is kept too), to
+  help track down connection problems.
+
 ## [0.5.0] - 2026-10-21
 
 ### Added
