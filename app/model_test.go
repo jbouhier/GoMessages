@@ -105,3 +105,27 @@ func TestStatusOf(t *testing.T) {
 		}
 	}
 }
+
+// The info panel lists the other people with their numbers, and flags the
+// ones that aren't saved on the phone.
+func TestPeopleForInfoPanel(t *testing.T) {
+	saved := participant("sam", "+15550002", "Sam", false, true)
+	saved.ContactID = "42"
+	saved.FormattedNumber = "(555) 000-2"
+	saved.AvatarHexColor = "#1a73e8"
+	stranger := participant("x", "+15550009", "", false, true)
+	got := convertConversation(&gmproto.Conversation{IsGroupChat: true, Participants: []*gmproto.Participant{
+		participant("me", "+15550001", "Me", true, true),
+		saved,
+		stranger,
+	}}).People
+	if len(got) != 2 {
+		t.Fatalf("got %d people, want 2: %+v", len(got), got)
+	}
+	if p := got[0]; p.Name != "Sam" || p.Number != "+15550002" || p.Formatted != "(555) 000-2" || p.Color != "#1a73e8" || !p.Saved {
+		t.Errorf("saved contact: %+v", p)
+	}
+	if p := got[1]; p.Saved || p.Formatted != "+15550009" || p.Name != "+15550009" {
+		t.Errorf("stranger: %+v", p)
+	}
+}

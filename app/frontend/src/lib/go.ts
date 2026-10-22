@@ -3,7 +3,7 @@
 // go over fetch and events over server-sent events, so the real backend
 // can drive the UI from a plain browser (headless screenshots and tests).
 
-import { Browser, Events, Window } from "@wailsio/runtime";
+import { Browser, Clipboard, Events, Window } from "@wailsio/runtime";
 import * as Bindings from "../../bindings/gomessages/messages";
 
 export const overHTTP = new URLSearchParams(location.search).has("http");
@@ -42,4 +42,12 @@ export function setTitle(title: string) {
 export function openURL(url: string) {
   if (overHTTP) window.open(url, "_blank", "noreferrer");
   else void Browser.OpenURL(url);
+}
+
+/** Puts text on the clipboard. Inside the app Go does it: the web view's
+ *  clipboard API can refuse (NotAllowedError) when it decides the click
+ *  doesn't count as the user's. */
+export async function copyText(text: string) {
+  if (overHTTP) await navigator.clipboard.writeText(text);
+  else await Clipboard.SetText(text);
 }

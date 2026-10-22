@@ -3,6 +3,15 @@
 What changed in each GoMessages release. The section for a version is also
 its release notes on GitHub.
 
+## [Unreleased]
+
+### Added
+
+- Click a conversation's photo or name to open its info: number, call and
+  copy, mute and archive, and the photos and links already in the chat. A
+  number that isn't in your contacts says so. In a group, the members are
+  listed, and clicking one opens your chat with them. Esc closes it.
+
 ## [0.6.0] - 2026-10-22
 
 ### Added

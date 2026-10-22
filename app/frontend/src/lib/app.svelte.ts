@@ -2,7 +2,7 @@
 // gogo-messages' app.rs and actions.rs onto Svelte runes.
 
 import { flushSync } from "svelte";
-import { Go, on, overHTTP } from "./go";
+import { Go, copyText, on, overHTTP } from "./go";
 import type { Settings as GoSettings } from "../../bindings/gomessages/models";
 import type { Contact, Conversation, LinkPreview, Media, Message, SimChoice } from "./types";
 import { isImage } from "./types";
@@ -109,6 +109,8 @@ export class AppState {
   switcher = $state<{ query: string; index: number } | null>(null);
   showShortcuts = $state(false);
   viewer = $state<{ conv: string; message: string; index: number } | null>(null);
+  /** The info panel beside the thread. Stays open from one chat to the next. */
+  info = $state(false);
   newChat = $state<{ query: string; index: number; busy: boolean; error: string | null } | null>(null);
   contacts = $state<Contact[]>([]);
   contactsLoading = $state(false);
@@ -629,13 +631,8 @@ export class AppState {
     this.focusComposer++;
   }
 
-  async copyMessage(m: Message) {
-    try {
-      await navigator.clipboard.writeText(m.text);
-      this.showToast("Copied");
-    } catch (e) {
-      this.showToast(`Couldn't copy: ${e}`);
-    }
+  copyMessage(m: Message) {
+    return this.copyText(m.text);
   }
 
   /** Delete a message from the phone. One that never went out (still
@@ -857,6 +854,32 @@ export class AppState {
     }
   }
 
+  /** Opens the one-to-one chat with a number: the existing one, or a new one. */
+  async chatWith(number: string) {
+    const existing = this.convs.find((c) => !c.is_group && c.people?.length === 1 && c.people[0].number === number);
+    if (existing) {
+      this.showArchived = existing.archived;
+      return this.select(existing.id);
+    }
+    try {
+      const c: Conversation = await this.call("new_conversation", { number });
+      this.showArchived = false;
+      this.upsertConversation(c);
+      this.select(c.id);
+    } catch (e) {
+      this.showToast(`Couldn't start the chat: ${e}`);
+    }
+  }
+
+  async copyText(text: string) {
+    try {
+      await copyText(text);
+      this.showToast("Copied");
+    } catch (e) {
+      this.showToast(`Couldn't copy: ${e}`);
+    }
+  }
+
   // ---- viewer ----
 
   openViewer(conv: string, message: string, index: number) {
@@ -923,6 +946,9 @@ export class AppState {
         break;
       case "toggle-list":
         void this.setListVisible(!this.settings.sidebar_visible);
+        break;
+      case "info":
+        if (this.current && !this.settingsOpen && !this.newChat) this.info = !this.info;
         break;
       case "photos-only":
         this.settings.sidebar_width = this.compact

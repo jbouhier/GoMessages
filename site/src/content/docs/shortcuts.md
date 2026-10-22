@@ -25,6 +25,7 @@ where Mac uses `Cmd`, and `Alt` for `Option`.
 | Conversation 1 to 9 | `Cmd+1` … `Cmd+9` |
 | Show or hide the conversation list | `Cmd+B` |
 | Photos-only list | `Cmd+Shift+\` |
+| Show or hide conversation info | `Cmd+I` |
 | Refresh conversations | `Cmd+R` |
 | Light / dark | `Cmd+Shift+L` |
 
@@ -36,7 +37,7 @@ where Mac uses `Cmd`, and `Alt` for `Option`.
 | Attach a file | `Cmd+O` |
 | Scroll the conversation | `Page Up` / `Page Down` |
 | Oldest loaded / newest message | `Home` / `End` |
-| Back to the message box, or drop a reply | `Esc` |
+| Drop a reply, close conversation info, or back to the message box | `Esc` |
 
 ## Photo viewer
 

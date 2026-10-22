@@ -19,6 +19,19 @@ export interface Conversation {
   members: string[] | null;
   avatar_id?: string;
   sim_number?: number;
+  /** The other participants, for the info panel. */
+  people?: Person[] | null;
+}
+
+/** A participant as the phone sends it: no email or address, one number. */
+export interface Person {
+  id: string;
+  name: string;
+  number: string; // E.164
+  formatted_number: string;
+  color?: string;
+  /** False for a number that isn't in the phone's contacts. */
+  saved: boolean;
 }
 
 export interface Media {

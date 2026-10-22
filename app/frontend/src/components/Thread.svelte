@@ -234,11 +234,18 @@
 <section class="thread">
   <header class="head drag">
     {#if !app.settings.sidebar_visible}<ListButtons />{/if}
-    <Avatar name={conv.name} color={conv.color} group={conv.is_group} id={conv.avatar_id} size={38} />
-    <div class="title">
-      <div class="name">{conv.name}</div>
-      <div class="subtle small sub">{subtitle}</div>
-    </div>
+    <button
+      class="who"
+      class:open={app.info}
+      title={conv.is_group ? "Group info" : "Contact info"}
+      aria-expanded={app.info}
+      onclick={() => (app.info = !app.info)}>
+      <Avatar name={conv.name} color={conv.color} group={conv.is_group} id={conv.avatar_id} size={38} />
+      <span class="title">
+        <span class="name">{conv.name}</span>
+        <span class="subtle small sub">{subtitle}</span>
+      </span>
+    </button>
     <div class="theme" class:toolbar={app.settings.sidebar_visible}><ThemeButton /></div>
   </header>
 
@@ -363,7 +370,25 @@
     padding: calc(var(--top-inset) + 10px) 16px 10px 18px;
     border-bottom: 1px solid var(--divider);
   }
+  /* Photo and name open the info panel. */
+  .who {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
+    margin: -4px -8px;
+    padding: 4px 12px 4px 8px;
+    border-radius: 12px;
+    text-align: left;
+  }
+  .who:hover,
+  .who:focus-visible,
+  .who.open {
+    background: var(--hover);
+  }
   .title {
+    display: flex;
+    flex-direction: column;
     min-width: 0;
   }
   .theme {

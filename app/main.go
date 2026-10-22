@@ -135,6 +135,7 @@ func buildMenu(app *application.App) *application.Menu {
 	view := menu.AddSubmenu("View")
 	view.Add("Show/Hide Conversation List").SetAccelerator("CmdOrCtrl+B").OnClick(action("toggle-list"))
 	view.Add("Photos-Only List").SetAccelerator("CmdOrCtrl+Shift+\\").OnClick(action("photos-only"))
+	view.Add("Show/Hide Conversation Info").SetAccelerator("CmdOrCtrl+I").OnClick(action("info"))
 	view.AddSeparator()
 	view.Add("Light / Dark").SetAccelerator("CmdOrCtrl+Shift+L").OnClick(action("toggle-dark"))
 	view.AddSeparator()

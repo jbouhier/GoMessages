@@ -28,6 +28,20 @@ type Conversation struct {
 	// AvatarID is the other participant of a one-to-one chat, for its photo.
 	AvatarID  string `json:"avatar_id,omitempty"`
 	SIMNumber *int32 `json:"sim_number,omitempty"`
+	// People are the other participants, for the info panel.
+	People []Person `json:"people,omitempty"`
+}
+
+// Person is one participant as the phone describes them. The phone sends
+// no email, address or other numbers: only what's here.
+type Person struct {
+	ID        string `json:"id"`
+	Name      string `json:"name"`
+	Number    string `json:"number"`           // E.164
+	Formatted string `json:"formatted_number"` // as the phone shows it
+	Color     string `json:"color,omitempty"`
+	// Saved is false for a number that isn't in the phone's contacts.
+	Saved bool `json:"saved"`
 }
 
 type Media struct {
@@ -67,6 +81,7 @@ type Message struct {
 
 func convertConversation(c *gmproto.Conversation) Conversation {
 	var members []string
+	var people []Person
 	var avatarID string
 	self := c.GetDefaultOutgoingID()
 	for _, p := range c.GetParticipants() {
@@ -80,11 +95,19 @@ func convertConversation(c *gmproto.Conversation) Conversation {
 		if !c.GetIsGroupChat() && avatarID == "" {
 			avatarID = id
 		}
+		formatted := p.GetFormattedNumber()
+		if formatted == "" {
+			formatted = p.GetID().GetNumber()
+		}
 		name := p.GetFullName()
 		if name == "" {
-			name = p.GetFormattedNumber()
+			name = formatted
 		}
 		members = append(members, name)
+		people = append(people, Person{
+			ID: id, Name: name, Number: p.GetID().GetNumber(), Formatted: formatted,
+			Color: p.GetAvatarHexColor(), Saved: p.GetContactID() != "",
+		})
 	}
 	latest := c.GetLatestMessage()
 	snippet := latest.GetDisplayContent()
@@ -114,6 +137,7 @@ func convertConversation(c *gmproto.Conversation) Conversation {
 		Members:     members,
 		AvatarID:    avatarID,
 		SIMNumber:   simNumber,
+		People:      people,
 	}
 }
 

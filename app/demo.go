@@ -121,6 +121,10 @@ func (d *demo) start(ctx context.Context) {
 			SIMNumber: &sim,
 			Snippet:   last.Text, SnippetMe: last.FromMe, Timestamp: last.Timestamp,
 			Unread: s.id == "1" || s.id == "2", LatestMsgID: last.ID,
+			People: []Person{{
+				ID: demoAvatarID(s.id, false), Name: s.name, Color: s.color, Saved: true,
+				Number: "+1555010" + s.id + s.id + s.id + s.id, Formatted: "(555) 010-" + s.id + s.id + s.id + s.id,
+			}},
 		}
 	}
 	jb := d.msgs["1"]
@@ -229,7 +233,8 @@ func (d *demo) handle(ctx context.Context, cmd string, raw json.RawMessage) (any
 		}
 		id := "new-" + a.Number
 		sim := int32(1)
-		c := &Conversation{ID: id, Name: a.Number, Color: "#5f6368", IsRCS: true, SIMNumber: &sim, Timestamp: time.Now().UnixMilli()}
+		c := &Conversation{ID: id, Name: a.Number, Color: "#5f6368", IsRCS: true, SIMNumber: &sim, Timestamp: time.Now().UnixMilli(),
+			People: []Person{{ID: "n" + a.Number, Name: a.Number, Number: a.Number, Formatted: a.Number, Color: "#5f6368"}}}
 		d.convs[id] = c
 		return *c, nil
 	case "cancel_pair", "mark_read", "typing", "react":

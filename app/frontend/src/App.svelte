@@ -13,6 +13,7 @@
   import Sidebar from "./components/Sidebar.svelte";
   import Switcher from "./components/Switcher.svelte";
   import ThemeButton from "./components/ThemeButton.svelte";
+  import Info from "./components/Info.svelte";
   import Thread from "./components/Thread.svelte";
   import Viewer from "./components/Viewer.svelte";
 
@@ -99,6 +100,8 @@
       app.scrollThread("top");
     } else if (e.key === "End" && app.selected && (commandKey(e) || !composing)) {
       app.scrollThread("bottom");
+    } else if (e.key === "Escape" && app.info && app.current && !app.settingsOpen && !app.newChat) {
+      app.info = false;
     } else if (e.key === "Escape" && !editing && !app.settingsOpen && !app.newChat) {
       app.focusComposer++;
     } else return;
@@ -122,6 +125,7 @@
       <NewChat />
     {:else if app.current}
       <Thread conv={app.current} />
+      {#if app.info}<Info conv={app.current} />{/if}
     {:else}
       <div class="center drag">
         <div class="corner"><ThemeButton /></div>

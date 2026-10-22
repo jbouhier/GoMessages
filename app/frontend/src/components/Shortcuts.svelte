@@ -29,7 +29,7 @@
           ? ["Enter", "Send (Shift+Enter for a new line)"]
           : ["⌘Enter", "Send (Enter for a new line)"],
         ["⌘O", "Attach a file"],
-        ["Esc", "Back to the message box (or drop a reply)"],
+        ["Esc", "Drop a reply, close info, or back to the message box"],
       ],
     ],
     [
@@ -55,6 +55,7 @@
       [
         ["⌘B", "Show / hide the conversation list"],
         ["⌘⇧\\", "Photos-only list"],
+        ["⌘I", "Show / hide conversation info"],
         ["⌘⇧L", "Light / dark"],
         ["⌘+  ⌘−  ⌘0", "Text size"],
         ["⌘R", "Refresh conversations"],
