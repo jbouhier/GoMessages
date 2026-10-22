@@ -1,6 +1,7 @@
 <script lang="ts">
   // The card over a hovered or focused link chip: the page's picture, title
-  // and description, and the full address it opens. One for the whole app,
+  // and description, and the full address it opens. With no preview (still
+  // loading, failed, or not fetched) it shows the address alone. One for the whole app,
   // drawn outside the thread: rows there clip what they paint.
   import { app } from "../lib/app.svelte";
   import { mediaURL } from "../lib/types";
@@ -43,6 +44,15 @@
     return { left, top };
   });
 
+  // %20 and friends shown as text; the link still opens the raw address.
+  function readable(href: string): string {
+    try {
+      return decodeURI(href);
+    } catch {
+      return href;
+    }
+  }
+
   function close() {
     app.linkCard = null;
   }
@@ -51,7 +61,7 @@
 <svelte:window onscroll={close} onresize={close} onblur={close} onkeydown={(e) => e.key === "Escape" && card && close()} />
 <svelte:document onscrollcapture={close} />
 
-{#if card && p}
+{#if card}
   <div
     class="card"
     role="tooltip"
@@ -60,17 +70,19 @@
     style:width="{WIDTH}px"
     style:visibility={height ? "visible" : "hidden"}
     bind:offsetHeight={height}>
-    {#if p.image && !imageFailed}
+    {#if p?.image && !imageFailed}
       <img class="hero" src={mediaURL(p.image)} alt="" draggable="false" onerror={() => (imageFailed = true)} />
     {/if}
     <div class="body">
-      <div class="site subtle">
-        {#if p.icon}<img class="fav" src={mediaURL(p.icon)} alt="" draggable="false" />{/if}
-        <span>{p.site}</span>
-      </div>
-      <div class="title">{p.title}</div>
-      {#if p.description}<div class="desc">{p.description}</div>{/if}
-      <div class="url subtle">{card.href}</div>
+      {#if p}
+        <div class="site subtle">
+          {#if p.icon}<img class="fav" src={mediaURL(p.icon)} alt="" draggable="false" />{/if}
+          <span>{p.site}</span>
+        </div>
+        <div class="title">{p.title}</div>
+        {#if p.description}<div class="desc">{p.description}</div>{/if}
+      {/if}
+      <div class="url" class:subtle={!!p}>{readable(card.href)}</div>
       {#if lands}<div class="lands">Opens on <b>{lands}</b></div>{/if}
     </div>
   </div>
@@ -142,9 +154,13 @@
   .url {
     margin-top: 2px;
     font-size: 12px;
-    white-space: nowrap;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
     overflow: hidden;
-    text-overflow: ellipsis;
   }
   .lands {
     font-size: 12px;
