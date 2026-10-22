@@ -132,10 +132,43 @@ func (d *daemon) newClient(ad *libgm.AuthData) *libgm.Client {
 	return libgm.NewClient(ad, nil, d.log.With().Str("component", "libgm").Logger(), exhttp.ClientSettings{})
 }
 
+// eventQueueSize bounds the events waiting for the handler. A burst past it
+// (thousands of replayed messages) is still handled, just out of order.
+const eventQueueSize = 4096
+
+// queueEvents wraps handle so the caller never waits on it. libgm calls its
+// event handler on the long-poll reader, and anything that waits on the phone
+// there (GetConversation for a message's sender) deadlocks: the reply arrives
+// on that same reader. Events are handled in order on their own goroutine;
+// when the queue is full, the extra event gets a goroutine of its own rather
+// than block the reader.
+func queueEvents(size int, handle func(any), log zerolog.Logger) func(any) {
+	queue := make(chan any, size)
+	go func() {
+		for evt := range queue {
+			handle(evt)
+		}
+	}()
+	return func(evt any) {
+		select {
+		case queue <- evt:
+		default:
+			log.Warn().Type("type", evt).Msg("Event queue full, handling out of order")
+			go handle(evt)
+		}
+	}
+}
+
+// connectBackoff is the wait before connect attempt+1. A var so tests can
+// shorten it.
+var connectBackoff = func(attempt int) time.Duration {
+	return min(time.Duration(attempt+1)*3*time.Second, 30*time.Second)
+}
+
 func (d *daemon) connect(ctx context.Context, ad *libgm.AuthData) {
 	d.setState(stateConnecting)
 	c := d.newClient(ad)
-	c.SetEventHandler(func(evt any) { d.onEvent(ctx, c, evt) })
+	c.SetEventHandler(queueEvents(eventQueueSize, func(evt any) { d.onEvent(ctx, c, evt) }, d.log))
 	d.mu.Lock()
 	if old := d.client; old != nil {
 		old.Disconnect()
@@ -144,20 +177,32 @@ func (d *daemon) connect(ctx context.Context, ad *libgm.AuthData) {
 	d.account = ad.Mobile.GetSourceID()
 	d.mu.Unlock()
 
+	if d.connectWithRetry(ctx, c.Connect) {
+		go d.refreshAccount(ctx, c)
+	}
+}
+
+// connectWithRetry calls connect until it succeeds, Google rejects the
+// session, or ctx ends. It reports whether the link is up.
+func (d *daemon) connectWithRetry(ctx context.Context, connect func(context.Context) error) bool {
 	for attempt := 0; ; attempt++ {
-		err := c.Connect(ctx)
+		err := connect(ctx)
 		if err == nil {
-			return
+			// libgm has no "ready" event: connected means long polling is up.
+			// A slow phone shows up later as PhoneNotResponding.
+			d.log.Debug().Int("attempt", attempt).Msg("Connected")
+			d.setState(stateConnected)
+			return true
 		}
 		d.log.Err(err).Int("attempt", attempt).Msg("Connect failed")
 		if strings.Contains(err.Error(), "failed to refresh auth token") && attempt >= 2 {
 			d.loggedOut("Google rejected this session. Pair again.")
-			return
+			return false
 		}
 		select {
-		case <-time.After(min(time.Duration(attempt+1)*3*time.Second, 30*time.Second)):
+		case <-time.After(connectBackoff(attempt)):
 		case <-ctx.Done():
-			return
+			return false
 		}
 	}
 }
@@ -180,10 +225,6 @@ func (d *daemon) loggedOut(reason string) {
 
 func (d *daemon) onEvent(ctx context.Context, c *libgm.Client, evt any) {
 	switch e := evt.(type) {
-	case *events.ClientReady:
-		d.cacheConversations(e.Conversations)
-		d.setState(stateConnected)
-		go d.refreshAccount(ctx, c)
 	case *events.ListenRecovered, *events.PhoneRespondingAgain:
 		d.setState(stateConnected)
 	case *events.PhoneNotResponding:
@@ -210,7 +251,11 @@ func (d *daemon) onEvent(ctx context.Context, c *libgm.Client, evt any) {
 			d.o.event("sims", simChoices(e))
 		}
 	case *libgm.WrappedMessage:
-		parts := d.participants(ctx, e.GetConversationID())
+		// Sender names need the conversation. Don't hold the queue long for
+		// it: a message without names beats a stalled app.
+		pctx, cancel := context.WithTimeout(ctx, 10*time.Second)
+		parts := d.participants(pctx, e.GetConversationID())
+		cancel()
 		msg := convertMessage(e.Message, parts)
 		msg.IsOld = e.IsOld
 		d.o.event("message", msg)

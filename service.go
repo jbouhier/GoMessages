@@ -74,12 +74,19 @@ func newMessages(demo bool) (*Messages, error) {
 	if demo {
 		m.backend = newDemo(o, dir)
 	} else {
-		level := zerolog.WarnLevel
-		if os.Getenv("GOGO_DEBUG") != "" {
-			level = zerolog.DebugLevel
+		// Debug by default while connection issues get tracked down.
+		// GOGO_DEBUG=trace adds libgm's payload-level logs.
+		level := zerolog.DebugLevel
+		if os.Getenv("GOGO_DEBUG") == "trace" {
+			level = zerolog.TraceLevel
 		}
-		log := zerolog.New(zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.TimeOnly}).Level(level).With().Timestamp().Logger()
-		m.backend = newDaemon(o, dir, log)
+		var w io.Writer = zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: time.TimeOnly}
+		if f := openLogFile(dir); f != nil {
+			w = zerolog.MultiLevelWriter(w, zerolog.ConsoleWriter{Out: f, NoColor: true, TimeFormat: time.DateTime})
+			log.SetOutput(io.MultiWriter(os.Stderr, f))
+		}
+		logger := zerolog.New(w).Level(level).With().Timestamp().Logger()
+		m.backend = newDaemon(o, dir, logger)
 		m.links = newLinks(dir)
 	}
 	return m, nil
@@ -338,4 +345,26 @@ func (m *Messages) SetZoom(zoom float64) {
 	m.settings.Zoom = zoom
 	m.settingsMu.Unlock()
 	m.scheduleSave()
+}
+
+// openLogFile opens this run's log: ~/Library/Logs/GoMessages on macOS (so
+// Console.app finds it), a logs folder next to the data elsewhere. The last
+// run's log is kept as gomessages.1.log. nil if it can't be opened.
+func openLogFile(dataDir string) *os.File {
+	logDir := filepath.Join(dataDir, "logs")
+	if runtime.GOOS == "darwin" {
+		if home, err := os.UserHomeDir(); err == nil {
+			logDir = filepath.Join(home, "Library", "Logs", "GoMessages")
+		}
+	}
+	if err := os.MkdirAll(logDir, 0o700); err != nil {
+		return nil
+	}
+	path := filepath.Join(logDir, "gomessages.log")
+	_ = os.Rename(path, filepath.Join(logDir, "gomessages.1.log"))
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0o600)
+	if err != nil {
+		return nil
+	}
+	return f
 }
