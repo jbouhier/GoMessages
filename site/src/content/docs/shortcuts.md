@@ -20,21 +20,33 @@ where Mac uses `Cmd`, and `Alt` for `Option`.
 | Switch to a conversation | `Cmd+K` |
 | Search conversations | `Cmd+F` |
 | Next / previous conversation | `Option+↓` / `Option+↑` |
+| Next / previous conversation (alternative) | `Ctrl+Tab` / `Ctrl+Shift+Tab` |
 | Next / previous unread | `Option+Shift+↓` / `Option+Shift+↑` |
 | Conversation 1 to 9 | `Cmd+1` … `Cmd+9` |
 | Show or hide the conversation list | `Cmd+B` |
 | Photos-only list | `Cmd+Shift+\` |
 | Refresh conversations | `Cmd+R` |
+| Light / dark | `Cmd+Shift+L` |
 
 ## Read and write
 
 | Action | Shortcut |
 | --- | --- |
-| Send | `Enter` (`Shift+Enter` for a new line) |
+| Send | `Enter` (`Shift+Enter` for a new line), or `Cmd+Enter` with **Enter key sends** off in Settings |
 | Attach a file | `Cmd+O` |
 | Scroll the conversation | `Page Up` / `Page Down` |
 | Oldest loaded / newest message | `Home` / `End` |
 | Back to the message box, or drop a reply | `Esc` |
+
+## Photo viewer
+
+| Action | Shortcut |
+| --- | --- |
+| Previous / next photo | `←` / `→` |
+| Zoom in / out | `+` / `-` |
+| Fit / actual size | `0` / `1` |
+| Copy the image | `Cmd+C` |
+| Close | `Esc` |
 
 ## App
 

@@ -2,7 +2,7 @@
   import { app } from "../lib/app.svelte";
   import { keys } from "../lib/platform";
 
-  const groups: [string, [string, string][]][] = [
+  const groups: [string, [string, string][]][] = $derived([
     [
       "Navigate",
       [
@@ -10,6 +10,7 @@
         ["⌘K", "Switch to a conversation"],
         ["⌘F", "Search conversations"],
         ["⌥↓  ⌥↑", "Next / previous conversation"],
+        ["⌃Tab  ⌃⇧Tab", "Same, browser style"],
         ["⌥⇧↓  ⌥⇧↑", "Next / previous unread"],
         ["⌘1 … ⌘9", "Go to conversation 1–9"],
       ],
@@ -24,7 +25,9 @@
     [
       "Write",
       [
-        ["Enter", "Send (Shift+Enter for a new line)"],
+        app.settings.enter_sends
+          ? ["Enter", "Send (Shift+Enter for a new line)"]
+          : ["⌘Enter", "Send (Enter for a new line)"],
         ["⌘O", "Attach a file"],
         ["Esc", "Back to the message box (or drop a reply)"],
       ],
@@ -38,6 +41,16 @@
       ],
     ],
     [
+      "Photo viewer",
+      [
+        ["←  →", "Previous / next photo"],
+        ["+  −", "Zoom in / out"],
+        ["0  1", "Fit / actual size"],
+        ["⌘C", "Copy the image"],
+        ["Esc", "Close"],
+      ],
+    ],
+    [
       "View",
       [
         ["⌘B", "Show / hide the conversation list"],
@@ -48,7 +61,7 @@
       ],
     ],
     ["App", [["⌘,", "Settings"], ["⌘/", "Keyboard shortcuts"], ["⌘Q", "Quit"]]],
-  ];
+  ]);
 </script>
 
 <svelte:window onkeydown={(e) => e.key === "Escape" && (app.showShortcuts = false)} />
