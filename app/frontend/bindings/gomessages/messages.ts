@@ -88,6 +88,13 @@ export function SaveAs(path: string, name: string): $CancellablePromise<void> {
 }
 
 /**
+ * SaveContact writes a contact card (.vcf text) where the user chooses.
+ */
+export function SaveContact(name: string, vcf: string): $CancellablePromise<void> {
+    return $Call.ByID(1003890971, name, vcf);
+}
+
+/**
  * SetAppearance tints the window light or dark ("" follows the system).
  */
 export function SetAppearance(mode: string): $CancellablePromise<void> {
@@ -106,6 +113,21 @@ export function SetBlur(on: boolean): $CancellablePromise<void> {
  */
 export function SetZoom(zoom: number): $CancellablePromise<void> {
     return $Call.ByID(3683212827, zoom);
+}
+
+/**
+ * ShareContact shows the system share menu for a contact card (.vcf text)
+ * under the rect (window points) of the button that asked.
+ */
+export function ShareContact(name: string, vcf: string, x: number, y: number, w: number, h: number): $CancellablePromise<void> {
+    return $Call.ByID(3495572413, name, vcf, x, y, w, h);
+}
+
+/**
+ * ShareSupported says whether ShareContact shows the system share menu.
+ */
+export function ShareSupported(): $CancellablePromise<boolean> {
+    return $Call.ByID(2388964935);
 }
 
 /**

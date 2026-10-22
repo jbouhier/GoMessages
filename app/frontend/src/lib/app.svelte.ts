@@ -3,6 +3,7 @@
 
 import { flushSync } from "svelte";
 import { Go, copyText, on, overHTTP } from "./go";
+import { cardFileName } from "./vcard";
 import type { Settings as GoSettings } from "../../bindings/gomessages/models";
 import type { Contact, Conversation, LinkPreview, Media, Message, SimChoice } from "./types";
 import { isImage } from "./types";
@@ -65,6 +66,8 @@ export class AppState {
   demo = $state(false);
   /** The window can blur what's behind it (macOS, Windows). */
   blurSupported = $state(false);
+  /** macOS: Share opens the system share menu (else a save dialog). */
+  shareSupported = $state(false);
   link = $state<Link>("starting");
   account = $state("");
   pairing = $state<Pairing>({ kind: "idle" });
@@ -195,6 +198,7 @@ export class AppState {
     });
     this.demo = await Go.IsDemo();
     this.blurSupported = await Go.BlurSupported();
+    this.shareSupported = await Go.ShareSupported();
     const s = await Go.GetSettings();
     this.settings = { ...this.settings, ...s };
     // Events emitted before we listened are replayed by asking for the state.
@@ -877,6 +881,23 @@ export class AppState {
       this.showToast("Copied");
     } catch (e) {
       this.showToast(`Couldn't copy: ${e}`);
+    }
+  }
+
+  /** Shares a contact card from a button: the system share menu on macOS,
+   *  a save dialog elsewhere. */
+  async shareCard(name: string, vcf: string, from: HTMLElement) {
+    const file = cardFileName(name);
+    try {
+      if (this.shareSupported) {
+        const r = from.getBoundingClientRect();
+        const z = this.settings.zoom || 1;
+        await Go.ShareContact(file, vcf, r.left * z, r.top * z, r.width * z, r.height * z);
+      } else {
+        await Go.SaveContact(file, vcf);
+      }
+    } catch (e) {
+      this.showToast(`Couldn't share the contact: ${e}`);
     }
   }
 

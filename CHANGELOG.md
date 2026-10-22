@@ -11,6 +11,9 @@ its release notes on GitHub.
   copy, mute and archive, and the photos and links already in the chat. A
   number that isn't in your contacts says so. In a group, the members are
   listed, and clicking one opens your chat with them. Esc closes it.
+- Share a contact card (.vcf) from the info panel. On macOS it opens the
+  share menu (AirDrop, Messages, Mail…) plus Save as File and Add to
+  Contacts; elsewhere it saves the file. A group shares all its members.
 
 ## [0.6.0] - 2026-10-22
 

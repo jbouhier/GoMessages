@@ -268,6 +268,33 @@ func (m *Messages) SaveAs(path, name string) error {
 	return err
 }
 
+// ShareSupported says whether ShareContact shows the system share menu.
+func (m *Messages) ShareSupported() bool { return m.window != nil && shareSupported() }
+
+// ShareContact shows the system share menu for a contact card (.vcf text)
+// under the rect (window points) of the button that asked.
+func (m *Messages) ShareContact(name, vcf string, x, y, w, h float64) error {
+	dir := filepath.Join(os.TempDir(), "gomessages-cards")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		return err
+	}
+	path := filepath.Join(dir, filepath.Base(name))
+	if err := os.WriteFile(path, []byte(vcf), 0o600); err != nil {
+		return err
+	}
+	showShare(m.window, path, x, y, w, h)
+	return nil
+}
+
+// SaveContact writes a contact card (.vcf text) where the user chooses.
+func (m *Messages) SaveContact(name, vcf string) error {
+	dest, err := m.app.Dialog.SaveFile().SetFilename(filepath.Base(name)).PromptForSingleSelection()
+	if err != nil || dest == "" {
+		return err
+	}
+	return os.WriteFile(dest, []byte(vcf), 0o644)
+}
+
 // OpenPath opens a downloaded file in its default app.
 func (m *Messages) OpenPath(path string) error {
 	p := m.mediaFile(path)

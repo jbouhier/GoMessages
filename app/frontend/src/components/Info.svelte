@@ -8,6 +8,7 @@
   import { mediaURL, type Conversation, type Media, type Person } from "../lib/types";
   import Avatar from "./Avatar.svelte";
   import Icon from "./Icon.svelte";
+  import { vcard, vcards } from "../lib/vcard";
 
   let { conv }: { conv: Conversation } = $props();
 
@@ -33,6 +34,14 @@
     }
     return out;
   });
+
+  /** Members with a number: a group's Share sends all of their cards. */
+  const shareable = $derived(conv.is_group ? people.filter((p) => p.number) : person?.number ? [person] : []);
+
+  function share(e: MouseEvent) {
+    const card = conv.is_group ? vcards(shareable) : vcard({ ...shareable[0], name: conv.name });
+    void app.shareCard(conv.name, card, e.currentTarget as HTMLElement);
+  }
 
   function thumb(md: Media) {
     return md.thumb_id ? app.mediaState(md.thumb_id, md.thumb_key ?? "", md.mime) : app.mediaState(md.id, md.key, md.mime);
@@ -79,6 +88,11 @@
       {#if person?.number}
         <button onclick={() => openURL(`tel:${person.number}`)}><Icon name="phone" size={20} /><span>Call</span></button>
         <button onclick={() => app.copyText(person.number)}><Icon name="copy" size={20} /><span>Copy</span></button>
+      {/if}
+      {#if shareable.length}
+        <button title={app.shareSupported ? "Share contact card" : "Save contact card (.vcf)"} onclick={share}>
+          <Icon name="share" size={20} /><span>Share</span>
+        </button>
       {/if}
       <button onclick={() => app.convAction(conv, muted ? "unmute" : "mute")}>
         <Icon name={muted ? "bell" : "bell-off"} size={20} /><span>{muted ? "Unmute" : "Mute"}</span>
@@ -225,6 +239,9 @@
     padding-top: 4px;
   }
   h2 {
+    user-select: text;
+    -webkit-user-select: text;
+    cursor: text;
     margin: 8px 0 0;
     font-size: 19px;
     font-weight: 500;
@@ -242,7 +259,6 @@
     color: var(--subtle);
     padding: 2px 8px;
     border-radius: 6px;
-    user-select: text;
   }
   .number:hover {
     background: var(--hover);
@@ -269,7 +285,7 @@
   .actions {
     display: flex;
     justify-content: center;
-    gap: 6px;
+    gap: 2px;
   }
   .actions button {
     flex: 1;
