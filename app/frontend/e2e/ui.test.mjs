@@ -114,6 +114,33 @@ test("⌘K switches to the best match", async () => {
   await until("Oliver's chat", () => window.gm.selected === "4" && !window.gm.switcher);
 });
 
+const switcherRows = () => page.locator(".switcher .row");
+const activeRow = () => switcherRows().evaluateAll((rs) => rs.findIndex((r) => r.classList.contains("active")));
+
+// Regression: opening ⌘K under a resting pointer selected the row that
+// rendered beneath it (the 4th) instead of the first.
+test("⌘K opens on the first row even with the pointer resting over another", async () => {
+  await act("switch");
+  const box = await switcherRows().nth(3).boundingBox();
+  await page.keyboard.press("Escape");
+  await until("the switcher to close", () => !window.gm.switcher);
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await act("switch");
+  await switcherRows().nth(3).waitFor();
+  await page.waitForTimeout(100);
+  assert.equal(await activeRow(), 0, "first row selected");
+  await page.keyboard.press("ArrowDown");
+  assert.equal(await activeRow(), 1, "arrows move from the first row");
+});
+
+test("⌘K: moving the pointer over a row selects it", async () => {
+  await act("switch");
+  const box = await switcherRows().nth(2).boundingBox();
+  await page.mouse.move(box.x + 20, box.y + box.height / 2);
+  await page.mouse.move(box.x + 40, box.y + box.height / 2);
+  assert.equal(await activeRow(), 2);
+});
+
 test("settings open and Escape goes back", async () => {
   await open("JB Bouhier", "1");
   await page.getByPlaceholder("RCS message").focus();

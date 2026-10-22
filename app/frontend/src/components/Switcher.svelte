@@ -16,6 +16,16 @@
     (list?.children[i] as HTMLElement | undefined)?.scrollIntoView({ block: "nearest" });
   });
 
+  // Hover selects only after the pointer really moves. Opening the modal (or
+  // scrolling the list) under a resting cursor fires mouseenter/mousemove on
+  // whatever row lands there, which would steal the keyboard selection.
+  let lastPointer: { x: number; y: number } | null = null;
+  function hover(e: MouseEvent, i: number) {
+    const moved = lastPointer && (e.screenX !== lastPointer.x || e.screenY !== lastPointer.y);
+    lastPointer = { x: e.screenX, y: e.screenY };
+    if (moved) sw.index = i;
+  }
+
   function pick(id: string) {
     app.switcher = null;
     app.select(id);
@@ -49,7 +59,7 @@
   {/if}
   <div class="list" bind:this={list}>
   {#each matches as c, i (c.id)}
-    <button class="row" class:active={i === sw.index} onclick={() => pick(c.id)} onmouseenter={() => (sw.index = i)}>
+    <button class="row" class:active={i === sw.index} onclick={() => pick(c.id)} onmousemove={(e) => hover(e, i)}>
       <Avatar name={c.name} color={c.color} group={c.is_group} id={c.avatar_id} size={34} />
       <div class="text">
         <div class="name">{c.name}</div>
