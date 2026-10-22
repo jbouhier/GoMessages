@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime"
 	"slices"
 	"strings"
 	"testing"
@@ -387,8 +388,12 @@ func TestSessionRoundTrip(t *testing.T) {
 		t.Fatalf("loaded %v %v", got.SessionID, got.Cookies)
 	}
 	info, err := os.Stat(d.sessionPath())
-	if err != nil || info.Mode().Perm() != 0o600 {
-		t.Fatalf("session file mode %v, %v", info.Mode().Perm(), err)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Windows has no Unix permission bits; files report 0666 regardless.
+	if runtime.GOOS != "windows" && info.Mode().Perm() != 0o600 {
+		t.Fatalf("session file mode %v", info.Mode().Perm())
 	}
 	if _, err := os.Stat(d.sessionPath() + ".tmp"); !errors.Is(err, os.ErrNotExist) {
 		t.Fatal("temp file left behind")
