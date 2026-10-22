@@ -3,6 +3,21 @@
 What changed in each GoMessages release. The section for a version is also
 its release notes on GitHub.
 
+## [0.6.0] - 2026-10-22
+
+### Added
+
+- A theme button at the top right of the conversation: pick light, dark or
+  system, and a theme, without going to Settings. Hovering a theme shows it
+  on the chats behind before you choose.
+- ⌘⇧L switches between light and dark.
+
+### Changed
+
+- The card for a link with no preview still shows its full address, readable
+  and wrapped.
+- More space between the sections of the keyboard shortcuts list.
+
 ## [0.5.1] - 2026-10-22
 
 ### Fixed
