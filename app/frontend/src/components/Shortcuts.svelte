@@ -88,9 +88,12 @@
     font-weight: 400;
   }
   h3 {
-    margin: 14px 0 4px;
+    margin: 24px 0 4px;
     font-size: 13px;
     color: var(--accent);
+  }
+  h2 + h3 {
+    margin-top: 14px;
   }
   .row {
     display: flex;
