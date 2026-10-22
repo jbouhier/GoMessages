@@ -37,6 +37,8 @@ func (m *Messages) serve(addr string) error {
 }
 
 // rpc calls one Messages method by name with a JSON array of arguments.
+// New exported Messages methods need a case here as well, or the browser
+// (--serve, used by the UI tests) fails with "unknown method".
 func (m *Messages) rpc(w http.ResponseWriter, r *http.Request) {
 	var args []json.RawMessage
 	_ = json.NewDecoder(r.Body).Decode(&args)
@@ -68,11 +70,11 @@ func (m *Messages) rpc(w http.ResponseWriter, r *http.Request) {
 		m.SetZoom(z)
 	case "SignIn":
 		err = m.SignIn()
-	case "RequestNotifications", "BlurSupported":
+	case "RequestNotifications", "BlurSupported", "ShareSupported":
 		result = false
 	case "SetAppearance", "SetBlur":
 		// The browser follows its own color scheme.
-	case "Notify", "OpenPath", "SaveAs", "OpenDataFolder", "PickFile":
+	case "Notify", "OpenPath", "SaveAs", "SaveContact", "ShareContact", "OpenDataFolder", "PickFile":
 		// Desktop-only; nothing to do in a browser.
 		result = ""
 	default:
