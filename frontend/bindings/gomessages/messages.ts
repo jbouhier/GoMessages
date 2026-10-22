@@ -25,7 +25,7 @@ export function BlurSupported(): $CancellablePromise<boolean> {
 /**
  * Call runs one protocol command (conversations, messages, send, download,
  * avatars, contacts, sims, new_conversation, mark_read, react, typing,
- * logout, cancel_pair, state…).
+ * logout, cancel_pair, state…), plus link_preview.
  */
 export function Call(cmd: string, args: { [_ in string]?: any } | null): $CancellablePromise<any> {
     return $Call.ByID(1133741360, cmd, args);
