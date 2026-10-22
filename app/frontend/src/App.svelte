@@ -12,6 +12,7 @@
   import Shortcuts from "./components/Shortcuts.svelte";
   import Sidebar from "./components/Sidebar.svelte";
   import Switcher from "./components/Switcher.svelte";
+  import ThemeButton from "./components/ThemeButton.svelte";
   import Thread from "./components/Thread.svelte";
   import Viewer from "./components/Viewer.svelte";
 
@@ -118,6 +119,7 @@
       <Thread conv={app.current} />
     {:else}
       <div class="center drag">
+        <div class="corner"><ThemeButton /></div>
         <div>
           <p>Pick a conversation</p>
           <p class="subtle">Your chats appear on the left.</p>
@@ -146,6 +148,14 @@
     display: grid;
     place-items: center;
     text-align: center;
+  }
+  .center:has(.corner) {
+    position: relative;
+  }
+  .corner {
+    position: absolute;
+    top: calc(var(--top-inset) + 14px);
+    right: 16px;
   }
   .toast {
     position: fixed;

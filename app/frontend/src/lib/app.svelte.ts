@@ -169,8 +169,10 @@ export class AppState {
   dark = $derived(this.settings.mode === "dark" || (this.settings.mode !== "light" && this.systemDark));
   /** The theme's art shows (or everything is solid). */
   gradient = $derived(this.settings.background !== "solid");
-  /** The theme's id; Default for one that isn't there. */
-  theme = $derived(themeOf(this.settings.theme).id);
+  /** A theme shown while its swatch is hovered or focused; never saved. */
+  previewTheme = $state<string | null>(null);
+  /** The theme's id (or the one previewed); Default for one that isn't there. */
+  theme = $derived(themeOf(this.previewTheme ?? this.settings.theme).id);
 
   compact = $derived(this.settings.sidebar_width < MIN_WIDE_WIDTH);
   unreadCount = $derived(this.convs.filter((c) => c.unread && !c.archived).length);
@@ -255,6 +257,16 @@ export class AppState {
     // throws still surfaces through updateCallbackDone.
     vt?.ready?.catch(() => {});
     vt?.finished?.catch(() => {});
+  }
+
+  /** Flips to the other side of what's on screen. Leaves System behind:
+   *  Settings or the theme menu bring it back. */
+  toggleDark() {
+    const mode = this.dark ? "light" : "dark";
+    this.restyle(() => {
+      this.settings.mode = mode;
+      this.saveSettings();
+    });
   }
 
   setZoom(zoom: number) {
@@ -881,6 +893,8 @@ export class AppState {
         return this.setZoom(zoomStep(this.settings.zoom, false));
       case "zoom-reset":
         return this.setZoom(1);
+      case "toggle-dark":
+        return this.toggleDark();
     }
     if (!inApp) return;
     switch (action) {

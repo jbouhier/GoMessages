@@ -11,6 +11,7 @@
   import Bubble from "./Bubble.svelte";
   import Composer from "./Composer.svelte";
   import Icon from "./Icon.svelte";
+  import ThemeButton from "./ThemeButton.svelte";
   import ListButtons from "./ListButtons.svelte";
 
   const QUICK_REACTIONS = ["❤️", "👍", "😂", "😮", "😢", "🙏"];
@@ -238,6 +239,7 @@
       <div class="name">{conv.name}</div>
       <div class="subtle small sub">{subtitle}</div>
     </div>
+    <div class="theme" class:toolbar={app.settings.sidebar_visible}><ThemeButton /></div>
   </header>
 
   <div class="list" bind:this={list} onscroll={onScroll}>
@@ -363,6 +365,15 @@
   }
   .title {
     min-width: 0;
+  }
+  .theme {
+    display: flex;
+    margin-left: auto;
+  }
+  /* On the line of the list's buttons (its header pads 14px, this one 10px). */
+  .theme.toolbar {
+    align-self: flex-start;
+    margin-top: 4px;
   }
   .name {
     font-size: 16.5px;

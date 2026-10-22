@@ -42,6 +42,7 @@
       [
         ["⌘B", "Show / hide the conversation list"],
         ["⌘⇧\\", "Photos-only list"],
+        ["⌘⇧L", "Light / dark"],
         ["⌘+  ⌘−  ⌘0", "Text size"],
         ["⌘R", "Refresh conversations"],
       ],
