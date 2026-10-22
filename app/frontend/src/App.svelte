@@ -77,15 +77,20 @@
   const overlay = $derived(!!(app.switcher || app.showShortcuts || app.viewer));
   const inApp = $derived(app.link === "connected" || app.link === "phone_offline" || app.link === "connecting");
 
-  // Keys the menu bar doesn't carry. Everything with ⌘/Ctrl lives in the
-  // menu, which works on every platform and shows the shortcut.
+  // Keys the menu bar doesn't carry, or can't catch: everything with ⌘/Ctrl
+  // lives in the menu, which works on every platform and shows the shortcut.
   function onKey(e: KeyboardEvent) {
     if (overlay || !inApp) return;
     const target = e.target as HTMLElement;
     const editing = target?.tagName === "TEXTAREA" || target?.tagName === "INPUT";
     const composing = editing && (target as HTMLTextAreaElement).value.length > 0;
+    const arrow = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
     if (e.ctrlKey && e.key === "Tab") {
       app.act(e.shiftKey ? "previous" : "next");
+    } else if (arrow && e.altKey && !e.metaKey && !e.ctrlKey) {
+      // The menu carries ⌥↓/⌥↑ too, but on macOS the web view takes the key
+      // first (caret move, scroll) and the menu never sees it.
+      app.act(e.shiftKey ? (arrow > 0 ? "next-unread" : "previous-unread") : arrow > 0 ? "next" : "previous");
     } else if (e.key === "PageUp" && app.selected) {
       app.scrollThread("page-up");
     } else if (e.key === "PageDown" && app.selected) {
