@@ -17,7 +17,7 @@
         PackageDisplayName="GoMessages"
         PublisherName="CN=My Company"
         PublisherDisplayName="My Company"
-        Version="0.6.0.0"
+        Version="0.7.0.0"
         PackageDescription="Google Messages desktop client">
         <Capabilities>
             <Capability Name="runFullTrust" />
