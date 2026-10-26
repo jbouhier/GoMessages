@@ -3,6 +3,28 @@
 What changed in each GoMessages release. The section for a version is also
 its release notes on GitHub.
 
+## [Unreleased]
+
+### Added
+
+- Drag files from your desktop onto a conversation to attach them. They
+  wait in the message box with whatever you type; each goes out as its own
+  message when you send. Up to 10 at a time.
+- On Windows and Linux, `Ctrl+Q` quits and `F11` goes full screen.
+
+### Changed
+
+- On Windows and Linux, the title bar takes the theme's colors, like the
+  rest of the window, with its own minimize, maximize and close buttons.
+  Double-click it to maximize. Linux no longer shows a menu bar: every
+  shortcut still works, and `Ctrl+/` lists them.
+- `Cmd+O` adds to the files already in the message box instead of
+  replacing them.
+
+### Fixed
+
+- `Ctrl` shortcuts work on Windows. The window had no menu to catch them.
+
 ## [0.7.0] - 2026-10-22
 
 ### Added

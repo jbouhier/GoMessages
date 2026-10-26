@@ -84,6 +84,17 @@ Shortcuts with `Cmd`/`Ctrl` live in the native menu (`buildMenu` in
 `main.go`), which sends an `action` event to the UI. Keys without a
 modifier are handled in the UI.
 
+On Windows and Linux the window is frameless and has no menu bar
+(`customTitleBar` in `window.go`). The same shortcuts are registered as
+window key bindings instead, and the UI draws the title bar: a strip of
+`--top-inset` at the top of each pane, draggable like the macOS one, with
+`WindowControls` at the right.
+
+Files dropped on the conversation pane (`data-file-drop-target`) reach Go
+as `WindowFilesDropped`. Go keeps the regular files and sends them to the
+UI as a `files_dropped` event; they join the message box like `Cmd+O`.
+In `--serve`, the `DropFiles` method stands in for a drop, for the UI tests.
+
 ## Data on disk
 
 All under the OS config folder, in `GoMessages/` (for example

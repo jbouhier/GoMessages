@@ -3,8 +3,8 @@ title: Settings
 description: The GoMessages settings.
 ---
 
-Open with `Cmd+,` (Mac) or `Ctrl+,` (Windows, Linux), or **GoMessages →
-Settings…** in the menu bar.
+Open with `Cmd+,` (Mac) or `Ctrl+,` (Windows, Linux). On a Mac it's also
+**GoMessages → Settings…** in the menu bar.
 
 <img src="/GoMessages/product/settings.jpg" alt="GoMessages settings" width="2400" height="1500" />
 

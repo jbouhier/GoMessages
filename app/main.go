@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
+	"github.com/wailsapp/wails/v3/pkg/events"
 )
 
 //go:embed all:frontend/dist
@@ -72,6 +73,11 @@ func main() {
 			Backdrop: application.MacBackdropTransparent,
 		},
 		Windows: application.WindowsWindow{BackdropType: application.Acrylic},
+		// Windows and Linux: no system title bar, the UI draws one in the
+		// theme's colors. Windows 11 keeps the shadow and round corners.
+		Frameless: customTitleBar(),
+		// Files dragged from the desktop onto a conversation attach to it.
+		EnableFileDrop: true,
 	}
 	if blurSupported() {
 		options.BackgroundType = application.BackgroundTypeTranslucent
@@ -83,7 +89,20 @@ func main() {
 	messages.restoreWindow(&options)
 	window := app.Window.NewWithOptions(options)
 	messages.trackWindow(window)
-	app.Menu.Set(buildMenu(app))
+	window.OnWindowEvent(events.Common.WindowFilesDropped, func(e *application.WindowEvent) {
+		messages.filesDropped(e.Context().DroppedFiles())
+	})
+	menu, shortcuts := buildMenu(app)
+	if customTitleBar() {
+		// No menu bar to carry the shortcuts: the window catches them.
+		for _, s := range windowKeys(shortcuts) {
+			window.RegisterKeyBinding(s.accel, func(application.Window) { s.run() })
+		}
+		window.RegisterKeyBinding("Ctrl+Q", func(application.Window) { app.Quit() })
+		window.RegisterKeyBinding("F11", func(w application.Window) { w.ToggleFullscreen() })
+	} else {
+		app.Menu.Set(menu)
+	}
 
 	if err := app.Run(); err != nil {
 		log.Fatal(err)
@@ -108,18 +127,46 @@ func mediaMiddleware(m *Messages) application.Middleware {
 	}
 }
 
-// buildMenu is the menu bar. Each item carries its shortcut (which is also
-// how people discover them) and hands the action to the UI.
-func buildMenu(app *application.App) *application.Menu {
-	action := func(name string) func(*application.Context) {
-		return func(*application.Context) { app.Event.Emit("action", name) }
+// shortcut is a menu item's key and what it does, for windows without a
+// menu bar.
+type shortcut struct {
+	accel string
+	run   func()
+}
+
+// windowKeys are the shortcuts a window without a menu bar catches itself.
+// Alt+arrows stay with the UI, which handles them on every platform: caught
+// here too, they'd move twice.
+func windowKeys(all []shortcut) []shortcut {
+	var keys []shortcut
+	for _, s := range all {
+		if !strings.HasPrefix(s.accel, "Alt+") {
+			keys = append(keys, s)
+		}
+	}
+	return keys
+}
+
+// buildMenu is the menu bar, and the shortcuts in it. Each item carries its
+// shortcut (which is also how people discover them) and hands the action to
+// the UI.
+func buildMenu(app *application.App) (*application.Menu, []shortcut) {
+	var shortcuts []shortcut
+	// item adds a menu item that hands name to the UI, and keeps its shortcut.
+	item := func(m *application.Menu, label, accel, name string) {
+		run := func() { app.Event.Emit("action", name) }
+		i := m.Add(label).OnClick(func(*application.Context) { run() })
+		if accel != "" {
+			i.SetAccelerator(accel)
+			shortcuts = append(shortcuts, shortcut{accel, run})
+		}
 	}
 	menu := application.NewMenu()
 
 	appMenu := menu.AddSubmenu("GoMessages")
 	appMenu.AddRole(application.About)
 	appMenu.AddSeparator()
-	appMenu.Add("Settings…").SetAccelerator("CmdOrCtrl+,").OnClick(action("settings"))
+	item(appMenu, "Settings…", "CmdOrCtrl+,", "settings")
 	appMenu.AddSeparator()
 	appMenu.AddRole(application.ServicesMenu)
 	appMenu.AddSeparator()
@@ -133,43 +180,41 @@ func buildMenu(app *application.App) *application.Menu {
 	menu.AddRole(application.EditMenu)
 
 	view := menu.AddSubmenu("View")
-	view.Add("Show/Hide Conversation List").SetAccelerator("CmdOrCtrl+B").OnClick(action("toggle-list"))
-	view.Add("Photos-Only List").SetAccelerator("CmdOrCtrl+Shift+\\").OnClick(action("photos-only"))
-	view.Add("Show/Hide Conversation Info").SetAccelerator("CmdOrCtrl+I").OnClick(action("info"))
+	item(view, "Show/Hide Conversation List", "CmdOrCtrl+B", "toggle-list")
+	item(view, "Photos-Only List", "CmdOrCtrl+Shift+\\", "photos-only")
+	item(view, "Show/Hide Conversation Info", "CmdOrCtrl+I", "info")
 	view.AddSeparator()
-	view.Add("Light / Dark").SetAccelerator("CmdOrCtrl+Shift+L").OnClick(action("toggle-dark"))
+	item(view, "Light / Dark", "CmdOrCtrl+Shift+L", "toggle-dark")
 	view.AddSeparator()
-	view.Add("Actual Size").SetAccelerator("CmdOrCtrl+0").OnClick(action("zoom-reset"))
-	view.Add("Zoom In").SetAccelerator("CmdOrCtrl+plus").OnClick(action("zoom-in"))
-	view.Add("Zoom Out").SetAccelerator("CmdOrCtrl+-").OnClick(action("zoom-out"))
+	item(view, "Actual Size", "CmdOrCtrl+0", "zoom-reset")
+	item(view, "Zoom In", "CmdOrCtrl+plus", "zoom-in")
+	item(view, "Zoom Out", "CmdOrCtrl+-", "zoom-out")
 	view.AddSeparator()
-	view.Add("Refresh Conversations").SetAccelerator("CmdOrCtrl+R").OnClick(action("refresh"))
+	item(view, "Refresh Conversations", "CmdOrCtrl+R", "refresh")
 	view.AddSeparator()
 	view.AddRole(application.ToggleFullscreen)
 
 	goMenu := menu.AddSubmenu("Go")
-	goMenu.Add("New Chat").SetAccelerator("CmdOrCtrl+N").OnClick(action("new-chat"))
-	goMenu.Add("Switch Conversation…").SetAccelerator("CmdOrCtrl+K").OnClick(action("switch"))
-	goMenu.Add("Search Conversations").SetAccelerator("CmdOrCtrl+F").OnClick(action("search"))
+	item(goMenu, "New Chat", "CmdOrCtrl+N", "new-chat")
+	item(goMenu, "Switch Conversation…", "CmdOrCtrl+K", "switch")
+	item(goMenu, "Search Conversations", "CmdOrCtrl+F", "search")
 	goMenu.AddSeparator()
-	goMenu.Add("Next Conversation").SetAccelerator("Alt+Down").OnClick(action("next"))
-	goMenu.Add("Previous Conversation").SetAccelerator("Alt+Up").OnClick(action("previous"))
-	goMenu.Add("Next Unread").SetAccelerator("Alt+Shift+Down").OnClick(action("next-unread"))
-	goMenu.Add("Previous Unread").SetAccelerator("Alt+Shift+Up").OnClick(action("previous-unread"))
+	item(goMenu, "Next Conversation", "Alt+Down", "next")
+	item(goMenu, "Previous Conversation", "Alt+Up", "previous")
+	item(goMenu, "Next Unread", "Alt+Shift+Down", "next-unread")
+	item(goMenu, "Previous Unread", "Alt+Shift+Up", "previous-unread")
 	goMenu.AddSeparator()
 	jump := goMenu.AddSubmenu("Go to Conversation")
 	for n := 1; n <= 9; n++ {
-		jump.Add("Conversation " + strconv.Itoa(n)).
-			SetAccelerator("CmdOrCtrl+" + strconv.Itoa(n)).
-			OnClick(action("jump-" + strconv.Itoa(n-1)))
+		item(jump, "Conversation "+strconv.Itoa(n), "CmdOrCtrl+"+strconv.Itoa(n), "jump-"+strconv.Itoa(n-1))
 	}
-	goMenu.Add("Archived Conversations").OnClick(action("archived"))
+	item(goMenu, "Archived Conversations", "", "archived")
 	goMenu.AddSeparator()
-	goMenu.Add("Attach File…").SetAccelerator("CmdOrCtrl+O").OnClick(action("attach"))
+	item(goMenu, "Attach File…", "CmdOrCtrl+O", "attach")
 
 	menu.AddRole(application.WindowMenu)
 
 	help := menu.AddSubmenu("Help")
-	help.Add("Keyboard Shortcuts").SetAccelerator("CmdOrCtrl+/").OnClick(action("shortcuts"))
-	return menu
+	item(help, "Keyboard Shortcuts", "CmdOrCtrl+/", "shortcuts")
+	return menu, shortcuts
 }

@@ -4,7 +4,7 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium } from "playwright-core";
@@ -587,4 +587,177 @@ test("a conversation's menu and its confirmation work from the keyboard", async 
   await page.keyboard.press("Escape");
   assert.equal(await page.getByRole("alertdialog").count(), 0);
   assert.equal(await focusedName(), "More options for Mei Tanaka", "focus back on ⋮");
+});
+
+// ---- Windows and Linux: the UI's own title bar. ?titlebar shows it on any
+// platform. ----
+
+async function withTitleBar(size = { width: 1180, height: 760 }) {
+  await page.setViewportSize(size);
+  await page.goto(`http://${ADDR}/?http&titlebar`);
+  await page.getByRole("button", { name: "JB Bouhier" }).first().waitFor();
+}
+
+/** Buttons and fields the window buttons sit on top of. */
+const underWindowButtons = () =>
+  state(() => {
+    const bar = document.querySelector(".controls").getBoundingClientRect();
+    return [...document.querySelectorAll("button, input, textarea, [role=button]")]
+      .filter((e) => !e.closest(".controls"))
+      .filter((e) => {
+        const r = e.getBoundingClientRect();
+        return r.width > 0 && r.height > 0 && r.left < bar.right && r.right > bar.left && r.top < bar.bottom && r.bottom > bar.top;
+      })
+      .map((e) => e.getAttribute("aria-label") || e.getAttribute("title") || `${e.tagName}.${e.className}`);
+  });
+
+// Regression guard: the window buttons covered a header's own buttons (the
+// theme button, the info panel's close) on some screen.
+test("title bar: the window buttons sit clear of every screen's buttons", async () => {
+  for (const size of [{ width: 1180, height: 760 }, { width: 520, height: 400 }]) {
+    await withTitleBar(size);
+    const where = `${size.width}px wide`;
+    assert.equal(await page.locator(".controls button").count(), 3, `${where}: minimize, maximize, close`);
+    assert.equal(await state(() => getComputedStyle(document.documentElement).getPropertyValue("--top-inset").trim()), "32px");
+    assert.deepEqual(await underWindowButtons(), [], `${where}: empty window`);
+    await open("JB Bouhier", "1");
+    assert.deepEqual(await underWindowButtons(), [], `${where}: conversation`);
+    await act("info");
+    await until("the info panel", () => window.gm.info);
+    assert.deepEqual(await underWindowButtons(), [], `${where}: conversation info`);
+    await act("info");
+    await act("toggle-list");
+    await until("the list to hide", () => !window.gm.settings.sidebar_visible);
+    assert.deepEqual(await underWindowButtons(), [], `${where}: list hidden`);
+    await act("toggle-list");
+    for (const screen of ["settings", "new-chat"]) {
+      await act(screen);
+      await page.waitForTimeout(200);
+      assert.deepEqual(await underWindowButtons(), [], `${where}: ${screen}`);
+      await page.keyboard.press("Escape");
+    }
+    await open("Mei Tanaka", "5");
+    await page.locator(".photo").first().click();
+    await until("the viewer", () => window.gm.viewer);
+    assert.deepEqual(await underWindowButtons(), [], `${where}: photo viewer`);
+    assert.ok(await page.locator(".controls.over-viewer").isVisible(), `${where}: light buttons over the dark viewer`);
+    await page.keyboard.press("Escape");
+  }
+});
+
+test("title bar: the strip drags the window, its buttons don't", async () => {
+  await withTitleBar();
+  await open("JB Bouhier", "1");
+  const drag = (x, y) =>
+    state(([x, y]) => getComputedStyle(document.elementFromPoint(x, y)).getPropertyValue("--wails-draggable").trim(), [x, y]);
+  assert.equal(await drag(150, 10), "drag", "over the list");
+  assert.equal(await drag(700, 10), "drag", "over the conversation");
+  const close = await page.getByRole("button", { name: "Close", exact: true }).boundingBox();
+  assert.equal(await drag(close.x + close.width / 2, close.y + close.height / 2), "no-drag", "the close button clicks");
+});
+
+test("title bar: macOS keeps its own traffic lights", async (t) => {
+  if (!(await state(() => /Mac/.test(navigator.platform)))) return t.skip("Windows and Linux always draw it");
+  assert.equal(await page.locator(".controls").count(), 0);
+  assert.equal(await state(() => getComputedStyle(document.documentElement).getPropertyValue("--top-inset").trim()), "28px");
+});
+
+// ---- Files dropped on the window ----
+
+/** What the UI asked Go to send, in order. */
+function recordSends() {
+  const sends = [];
+  page.on("request", (r) => {
+    if (!r.url().endsWith("/rpc/Call")) return;
+    const [cmd, args] = JSON.parse(r.postData() ?? "[]");
+    if (cmd === "send") sends.push(args);
+  });
+  return sends;
+}
+
+const drop = (paths) => state((p) => fetch("/rpc/DropFiles", { method: "POST", body: JSON.stringify([p]) }), paths);
+const chips = () => page.locator(".composer .attachment .name").allTextContents();
+
+test("dropped files wait in the message box, then go out one message each", async () => {
+  const sends = recordSends();
+  const a = join(home, "kyoto.jpg");
+  const b = join(home, "notes.txt");
+  const folder = join(home, "a folder");
+  writeFileSync(a, "x");
+  writeFileSync(b, "x");
+  mkdirSync(folder, { recursive: true });
+  await open("JB Bouhier", "1");
+
+  // Through Go, as a real drop: the folder and the repeat are left out.
+  await drop([a, folder, b, a]);
+  await until("two files in the box", () => window.gm.attachments.length === 2);
+  assert.deepEqual(await chips(), ["📎 kyoto.jpg", "📎 notes.txt"]);
+  await drop([b]);
+  await page.waitForTimeout(300);
+  assert.equal((await chips()).length, 2, "a file already there isn't added twice");
+
+  const box = page.getByPlaceholder("RCS message");
+  await box.fill("from the trip");
+  await box.press("Enter");
+  await until("two sends", () => window.gm.attachments.length === 0);
+  for (let i = 0; i < 50 && sends.length < 2; i++) await page.waitForTimeout(100);
+  assert.deepEqual(
+    sends.map((s) => ({ path: s.path, text: s.text })),
+    [
+      { path: a, text: "from the trip" },
+      { path: b, text: "" },
+    ],
+    "one message per file, the text with the first",
+  );
+  assert.equal(await page.locator(".composer .attachment").count(), 0, "the box is empty again");
+});
+
+test("a dropped file can be taken back out before sending", async () => {
+  await open("JB Bouhier", "1");
+  await state(() => window.gm.attachFiles(["/x/one.jpg", "C:\\x\\two.pdf"]));
+  assert.deepEqual(await chips(), ["📎 one.jpg", "📎 two.pdf"]);
+  await page.getByRole("button", { name: "Remove one.jpg" }).click();
+  assert.deepEqual(await chips(), ["📎 two.pdf"]);
+  assert.deepEqual(await state(() => window.gm.attachments), ["C:\\x\\two.pdf"]);
+});
+
+test("files wait for the conversation they were dropped on", async () => {
+  await open("JB Bouhier", "1");
+  await state(() => window.gm.attachFiles(["/x/one.jpg"]));
+  await open("Oliver Bennett", "4");
+  assert.equal(await page.locator(".composer .attachment").count(), 0, "not carried to another conversation");
+});
+
+test("past the limit, the extra files are left out with a note", async () => {
+  await open("JB Bouhier", "1");
+  await state(() => window.gm.attachFiles(Array.from({ length: 12 }, (_, i) => `/x/f${i}.jpg`)));
+  assert.equal(await page.locator(".composer .attachment").count(), 10);
+  assert.match(await page.getByRole("status").textContent(), /2 left out/);
+});
+
+test("the pane shows where files will go while they hover it", async () => {
+  await open("JB Bouhier", "1");
+  const pane = page.locator(".thread");
+  assert.equal(await pane.getAttribute("data-file-drop-target"), "", "the conversation takes drops");
+  assert.equal(await page.locator(".thread .drop").isVisible(), false, "hidden until files hover");
+  // Wails adds this class while files hover a drop target.
+  await pane.evaluate((e) => e.classList.add("file-drop-target-active"));
+  assert.ok(await page.getByText("Drop to attach for JB Bouhier").isVisible());
+  await pane.evaluate((e) => e.classList.remove("file-drop-target-active"));
+  assert.equal(await page.locator(".thread .drop").isVisible(), false);
+});
+
+test("a drop with nowhere to go says why", async () => {
+  await act("settings");
+  await until("settings", () => window.gm.settingsOpen);
+  await state(() => window.gm.attachFiles(["/x/one.jpg"]));
+  assert.match(await page.getByRole("status").textContent(), /Open a conversation/);
+  await page.keyboard.press("Escape");
+
+  await open("JB Bouhier", "1");
+  await state(() => (window.gm.current.read_only = true));
+  assert.equal(await page.locator(".thread").getAttribute("data-file-drop-target"), null, "a read-only chat takes no drops");
+  await state(() => window.gm.attachFiles(["/x/one.jpg"]));
+  assert.match(await page.getByRole("status").textContent(), /can't reply/);
+  assert.equal(await state(() => window.gm.attachments.length), 0);
 });

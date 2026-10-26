@@ -1,6 +1,6 @@
 <script lang="ts">
   import { app } from "./lib/app.svelte";
-  import { commandKey, isMac } from "./lib/platform";
+  import { commandKey, customTitleBar, isMac } from "./lib/platform";
   import { setTitle } from "./lib/go";
   import { backgroundOf, paneOpacity } from "./lib/themes";
   import { Go } from "./lib/go";
@@ -16,6 +16,7 @@
   import Info from "./components/Info.svelte";
   import Thread from "./components/Thread.svelte";
   import Viewer from "./components/Viewer.svelte";
+  import WindowControls from "./components/WindowControls.svelte";
 
   app.start();
 
@@ -53,6 +54,7 @@
     }
     if (app.blurSupported) void Go.SetBlur(blur);
     root.classList.toggle("mac", isMac);
+    root.classList.toggle("titlebar", customTitleBar);
   });
 
   // The window's own light or dark (traffic lights, scroll bars, and the
@@ -143,6 +145,7 @@
 {#if app.viewer}<Viewer />{/if}
 <LinkCard />
 {#if app.toast}<div class="toast" role="status">{app.toast}</div>{/if}
+{#if customTitleBar}<WindowControls />{/if}
 
 <style>
   main {

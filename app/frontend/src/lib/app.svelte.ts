@@ -8,6 +8,7 @@ import type { Settings as GoSettings } from "../../bindings/gomessages/models";
 import type { Contact, Conversation, LinkPreview, Media, Message, SimChoice } from "./types";
 import { isImage } from "./types";
 import { findMessage, isPending, newTmpID, upsertMessage } from "./messages";
+import { MAX_ATTACHMENTS, addAttachments, fileName } from "./attachments";
 import { score } from "./match";
 import { themeOf } from "./themes";
 
@@ -86,7 +87,8 @@ export class AppState {
   previews = $state<Record<string, PreviewState>>({});
   linkCard = $state<LinkCard | null>(null);
   avatars = $state<Record<string, string | null>>({});
-  attachment = $state<string | null>(null);
+  /** Files waiting in the message box; each goes out as its own message. */
+  attachments = $state<string[]>([]);
   toast = $state<string | null>(null);
 
   settings = $state<Settings>({
@@ -190,6 +192,7 @@ export class AppState {
     dark.addEventListener("change", () => this.readSystemDark());
     on("gm", (d: { event: string; data: any }) => this.onEvent(d.event, d.data));
     on("action", (name: string) => this.act(name));
+    on("files_dropped", (paths: string[]) => this.attachFiles(paths));
     // In a browser there is no menu bar; tests send its actions and read
     // the state through this.
     if (overHTTP) (window as any).gm = this;
@@ -496,7 +499,7 @@ export class AppState {
       return;
     }
     this.selected = id;
-    this.attachment = null;
+    this.attachments = [];
     this.unseenBelow = 0;
     this.atBottom = true;
     this.focusComposer++;
@@ -581,18 +584,31 @@ export class AppState {
       return;
     }
     const text = (this.drafts[conv] ?? "").trim();
-    const attachment = this.attachment;
-    if (!text && !attachment) return;
+    const files = this.attachments;
+    if (!text && !files.length) return;
     const replyTo = this.replyTo[conv]?.id;
-    this.attachment = null;
+    this.attachments = [];
     delete this.drafts[conv];
     delete this.replyTo[conv];
+    const sim =
+      this.selectedSims[conv] ??
+      (this.sims.length === 1 && currentSim !== this.sims[0].number ? this.sims[0].number : undefined);
+    // One message per file, as the phone sends them; the text and the reply
+    // go with the first.
+    const parts = files.length ? files.map((path, i) => ({ path, text: i ? "" : text })) : [{ path: "", text }];
+    for (const [i, part] of parts.entries()) {
+      await this.sendOne(conv, part.text, part.path, i ? undefined : replyTo, sim);
+    }
+  }
+
+  /** Sends one message, shown at once as a placeholder until the phone's echo. */
+  private async sendOne(conv: string, text: string, path: string, replyTo: string | undefined, sim: number | undefined) {
     // Same tmp id shape as the native app (a bare UUID); the local
     // placeholder id keeps the tmp_ prefix so it's never paged from.
     const tmpID = newTmpID();
     const tmp = `tmp_${tmpID}`;
-    const name = attachment?.split(/[\\/]/).pop() ?? "";
-    const shown = attachment ? (text ? `📎 ${name}\n${text}` : `📎 ${name}`) : text;
+    const name = fileName(path);
+    const shown = path ? (text ? `📎 ${name}\n${text}` : `📎 ${name}`) : text;
     const thread = (this.threads[conv] ??= { msgs: [], more: false, loading: false, older: false, loaded: true, loadingSince: 0, seq: 0, olderRetryAt: 0 });
     thread.msgs.push({
       id: tmp,
@@ -608,10 +624,7 @@ export class AppState {
     this.scrollThread("bottom");
     const args: Record<string, unknown> = { conversation_id: conv, text, tmp_id: tmpID };
     if (replyTo) args.reply_to = replyTo;
-    if (attachment) args.path = attachment;
-    const sim =
-      this.selectedSims[conv] ??
-      (this.sims.length === 1 && currentSim !== this.sims[0].number ? this.sims[0].number : undefined);
+    if (path) args.path = path;
     if (sim !== undefined) args.sim_number = sim;
     try {
       await this.call("send", args);
@@ -915,10 +928,25 @@ export class AppState {
 
   async pickAttachment() {
     const path = await Go.PickFile();
-    if (path) {
-      this.attachment = path;
-      this.focusComposer++;
+    if (path) this.attachFiles([path]);
+  }
+
+  /** Adds files to the open conversation's message box: picked, or dropped
+   *  on the window. */
+  attachFiles(paths: string[]) {
+    const conv = this.current;
+    if (!conv || this.settingsOpen || this.newChat) {
+      this.showToast("Open a conversation to send files to it.");
+      return;
     }
+    if (conv.read_only) {
+      this.showToast("You can't reply to this conversation.");
+      return;
+    }
+    const { files, dropped } = addAttachments(this.attachments, paths);
+    this.attachments = files;
+    if (dropped) this.showToast(`Up to ${MAX_ATTACHMENTS} files at a time. ${dropped} left out.`);
+    this.focusComposer++;
   }
 
   act(action: string) {

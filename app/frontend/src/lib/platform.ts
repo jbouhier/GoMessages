@@ -11,3 +11,8 @@ export function keys(mac: string): string {
 export function commandKey(e: KeyboardEvent): boolean {
   return isMac ? e.metaKey : e.ctrlKey;
 }
+
+/** Windows and Linux: no system title bar, the UI draws its own (see
+ *  customTitleBar in window.go). ?titlebar shows it in a browser too, for
+ *  screenshots and tests on a Mac. */
+export const customTitleBar = !isMac || new URLSearchParams(location.search).has("titlebar");

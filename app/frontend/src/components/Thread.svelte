@@ -231,7 +231,10 @@
 
 <svelte:window onfocus={() => app.markReadIfVisible()} onclick={() => (menu = null)} />
 
-<section class="thread">
+<!-- Files dragged from the desktop land here: Wails marks the pane with
+     file-drop-target-active while they hover, and Go hands them to
+     app.attachFiles on drop. -->
+<section class="thread" data-file-drop-target={conv.read_only ? undefined : ""}>
   <header class="head drag">
     {#if !app.settings.sidebar_visible}<ListButtons />{/if}
     <button
@@ -352,6 +355,14 @@
       onconfirm={confirmDelete}
       oncancel={() => (deleting = null)} />
   {/if}
+
+  <div class="drop" aria-hidden="true">
+    <div class="drop-card">
+      <Icon name="paperclip" size={28} />
+      <p>Drop to attach for {conv.name}</p>
+      <p class="subtle small">They wait in the message box until you send.</p>
+    </div>
+  </div>
 </section>
 
 <style>
@@ -362,6 +373,40 @@
     display: flex;
     flex-direction: column;
     background: var(--pane);
+  }
+  /* Shown only while files hover the pane. */
+  .drop {
+    position: absolute;
+    inset: 0;
+    z-index: 45;
+    display: none;
+    place-items: center;
+    padding: 24px;
+    pointer-events: none;
+    background: color-mix(in srgb, var(--pane) 70%, transparent);
+  }
+  .thread:global(.file-drop-target-active) .drop {
+    display: grid;
+  }
+  .drop-card {
+    display: grid;
+    justify-items: center;
+    gap: 4px;
+    max-width: 100%;
+    padding: 28px 36px;
+    border: 2px dashed var(--accent);
+    border-radius: 18px;
+    background: var(--composer);
+    color: var(--accent);
+    text-align: center;
+  }
+  .drop-card p {
+    margin: 0;
+    color: var(--text);
+    overflow-wrap: anywhere;
+  }
+  .drop-card p.subtle {
+    color: var(--subtle);
   }
   .head {
     display: flex;

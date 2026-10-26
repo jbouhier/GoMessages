@@ -248,6 +248,19 @@ func (m *Messages) PickFile() (string, error) {
 	return m.app.Dialog.OpenFile().SetTitle("Attach a file").PromptForSingleSelection()
 }
 
+// filesDropped hands files dragged onto the window to the UI, which attaches
+// them to the open conversation.
+func (m *Messages) filesDropped(paths []string) {
+	files := droppableFiles(paths)
+	switch {
+	case len(files) == 0:
+	case m.httpEvents != nil:
+		m.httpEvents.publish("files_dropped", files)
+	case m.app != nil:
+		m.app.Event.Emit("files_dropped", files)
+	}
+}
+
 // SaveAs copies a downloaded file where the user chooses.
 func (m *Messages) SaveAs(path, name string) error {
 	dest, err := m.app.Dialog.SaveFile().SetFilename(name).PromptForSingleSelection()

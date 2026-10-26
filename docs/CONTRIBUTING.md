@@ -20,6 +20,7 @@
 - **UI tests** (`app/frontend/e2e/ui.test.mjs`): the real Go backend on demo
   data, served over HTTP, driven in headless Chrome. They cover layout at
   every size and zoom, keyboard use, and WCAG AA contrast for every theme.
+  `?titlebar` shows the Windows and Linux title bar on any platform.
 
 Sign-in can't run in CI because it needs a Google account and a phone. When
 you change `service.go`'s sign-in or a `webviewauth_*.go` file, pair a real

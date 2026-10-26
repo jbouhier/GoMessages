@@ -4,6 +4,7 @@
   import type { Conversation } from "../lib/types";
   import Icon from "./Icon.svelte";
   import { popup } from "../lib/popup";
+  import { fileName } from "../lib/attachments";
 
   let { conv }: { conv: Conversation } = $props();
   let input = $state<HTMLTextAreaElement>();
@@ -15,7 +16,7 @@
 
   const draft = $derived(app.drafts[conv.id] ?? "");
   const replying = $derived(app.replyTo[conv.id]);
-  const canSend = $derived(!!draft.trim() || !!app.attachment);
+  const canSend = $derived(!!draft.trim() || app.attachments.length > 0);
   const currentSim = $derived(app.selectedSims[conv.id] ?? conv.sim_number);
   const simLabel = $derived(app.sims.find((s) => s.number === currentSim)?.label);
 
@@ -106,12 +107,20 @@
         </button>
       </div>
     {/if}
-    {#if app.attachment}
-      <div class="attachment">
-        <span>📎 {app.attachment.split(/[\\/]/).pop()}</span>
-        <button class="icon-button tiny" title="Remove attachment" onclick={() => (app.attachment = null)}>
-          <Icon name="close" size={14} />
-        </button>
+    {#if app.attachments.length}
+      <div class="attachments">
+        {#each app.attachments as path (path)}
+          <div class="attachment" title={path}>
+            <span class="name">📎 {fileName(path)}</span>
+            <button
+              class="icon-button tiny"
+              title="Remove attachment"
+              aria-label="Remove {fileName(path)}"
+              onclick={() => (app.attachments = app.attachments.filter((p) => p !== path))}>
+              <Icon name="close" size={14} />
+            </button>
+          </div>
+        {/each}
       </div>
     {/if}
     <div class="bar">
@@ -196,14 +205,26 @@
   .sim-menu .current {
     background: var(--selected);
   }
+  .attachments {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 6px 50px;
+  }
   .attachment {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    margin: 0 0 6px 50px;
+    min-width: 0;
+    max-width: 100%;
     padding: 6px 10px;
     border-radius: 12px;
     background: var(--composer);
+  }
+  .attachment .name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   .tiny {
     width: 22px;

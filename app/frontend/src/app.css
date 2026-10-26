@@ -130,6 +130,11 @@
 :root.mac {
   --top-inset: 28px;
 }
+/* Windows and Linux: the strip our own title bar takes, with the window
+   buttons at its right (WindowControls). */
+:root.titlebar {
+  --top-inset: 32px;
+}
 
 * {
   box-sizing: border-box;

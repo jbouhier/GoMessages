@@ -34,7 +34,7 @@ where Mac uses `Cmd`, and `Alt` for `Option`.
 | Action | Shortcut |
 | --- | --- |
 | Send | `Enter` (`Shift+Enter` for a new line), or `Cmd+Enter` with **Enter key sends** off in Settings |
-| Attach a file | `Cmd+O` |
+| Attach a file | `Cmd+O`, or drag files onto the conversation |
 | Scroll the conversation | `Page Up` / `Page Down` |
 | Oldest loaded / newest message | `Home` / `End` |
 | Drop a reply, close conversation info, or back to the message box | `Esc` |
@@ -57,6 +57,7 @@ where Mac uses `Cmd`, and `Alt` for `Option`.
 | Text size bigger / smaller / reset | `Cmd+=` / `Cmd+-` / `Cmd+0` |
 | All shortcuts | `Cmd+/` |
 | Quit | `Cmd+Q` |
+| Full screen (Windows, Linux) | `F11` |
 
 Menus, pickers, and confirmations work from the keyboard: arrows or `Tab`
 to move, `Enter` or `Space` to choose, `Esc` to close. A confirmation for

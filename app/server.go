@@ -74,6 +74,11 @@ func (m *Messages) rpc(w http.ResponseWriter, r *http.Request) {
 		result = false
 	case "SetAppearance", "SetBlur":
 		// The browser follows its own color scheme.
+	case "DropFiles":
+		// The UI tests' stand-in for files dropped on the window.
+		var paths []string
+		arg(0, &paths)
+		m.filesDropped(paths)
 	case "Notify", "OpenPath", "SaveAs", "SaveContact", "ShareContact", "OpenDataFolder", "PickFile":
 		// Desktop-only; nothing to do in a browser.
 		result = ""
