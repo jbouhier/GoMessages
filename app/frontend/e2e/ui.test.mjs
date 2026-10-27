@@ -598,15 +598,27 @@ async function withTitleBar(size = { width: 1180, height: 760 }) {
   await page.getByRole("button", { name: "JB Bouhier" }).first().waitFor();
 }
 
-/** Buttons and fields the window buttons sit on top of. */
+/** Buttons and fields the window buttons sit on top of. Only the part of
+ *  each that shows counts: a message scrolled up under the header is cut
+ *  off by its list, though its box still reaches there. */
 const underWindowButtons = () =>
   state(() => {
     const bar = document.querySelector(".controls").getBoundingClientRect();
+    const shown = (e) => {
+      let { left, top, right, bottom } = e.getBoundingClientRect();
+      for (let a = e.parentElement; a; a = a.parentElement) {
+        const s = getComputedStyle(a);
+        if (s.overflowX === "visible" && s.overflowY === "visible") continue;
+        const c = a.getBoundingClientRect();
+        [left, top, right, bottom] = [Math.max(left, c.left), Math.max(top, c.top), Math.min(right, c.right), Math.min(bottom, c.bottom)];
+      }
+      return { left, top, right, bottom };
+    };
     return [...document.querySelectorAll("button, input, textarea, [role=button]")]
       .filter((e) => !e.closest(".controls"))
       .filter((e) => {
-        const r = e.getBoundingClientRect();
-        return r.width > 0 && r.height > 0 && r.left < bar.right && r.right > bar.left && r.top < bar.bottom && r.bottom > bar.top;
+        const r = shown(e);
+        return r.right > r.left && r.bottom > r.top && r.left < bar.right && r.right > bar.left && r.top < bar.bottom && r.bottom > bar.top;
       })
       .map((e) => e.getAttribute("aria-label") || e.getAttribute("title") || `${e.tagName}.${e.className}`);
   });
