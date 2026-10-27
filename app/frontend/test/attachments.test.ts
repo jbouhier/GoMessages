@@ -1,7 +1,7 @@
 // Unit tests for the message box's files. Run with `just unit`.
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { MAX_ATTACHMENTS, addAttachments, fileName } from "../src/lib/attachments.ts";
+import { MAX_ATTACHMENTS, addAttachments, attachmentKind, attachmentURL, fileName } from "../src/lib/attachments.ts";
 
 test("file names from macOS, Linux and Windows paths", () => {
   assert.equal(fileName("/Users/jb/Desktop/cat.jpg"), "cat.jpg");
@@ -27,4 +27,18 @@ test("the input list is left alone", () => {
   const before = ["/a.jpg"];
   addAttachments(before, ["/b.jpg"]);
   assert.deepEqual(before, ["/a.jpg"]);
+});
+
+test("pictures and videos preview, other files show their name", () => {
+  assert.equal(attachmentKind("/x/IMG_0001.HEIC"), "image");
+  assert.equal(attachmentKind("C:\\x\\photo.jpeg"), "image");
+  assert.equal(attachmentKind("/x/clip.MOV"), "video");
+  assert.equal(attachmentKind("/x/clip.webm"), "video");
+  assert.equal(attachmentKind("/x/report.pdf"), "file");
+  assert.equal(attachmentKind("/x/png"), "file", "a name without an extension");
+  assert.equal(attachmentKind("/x.jpg/notes"), "file", "a folder's extension doesn't count");
+});
+
+test("the preview address carries the whole path", () => {
+  assert.equal(attachmentURL("C:\\a b\\c&d.jpg"), "/attachment?path=C%3A%5Ca%20b%5Cc%26d.jpg");
 });

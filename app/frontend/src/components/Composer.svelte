@@ -4,11 +4,14 @@
   import type { Conversation } from "../lib/types";
   import Icon from "./Icon.svelte";
   import { popup } from "../lib/popup";
-  import { fileName } from "../lib/attachments";
+  import { attachmentKind, attachmentURL, fileName } from "../lib/attachments";
 
   let { conv }: { conv: Conversation } = $props();
   let input = $state<HTMLTextAreaElement>();
   let simMenu = $state(false);
+  /** Previews that didn't load (a format the web view can't show, or a file
+   *  gone since): those show their name instead. */
+  let unpreviewable = $state<Record<string, boolean>>({});
 
   $effect(() => {
     if (app.focusComposer) input?.focus();
@@ -110,14 +113,24 @@
     {#if app.attachments.length}
       <div class="attachments">
         {#each app.attachments as path (path)}
-          <div class="attachment" title={path}>
-            <span class="name">📎 {fileName(path)}</span>
+          {@const kind = unpreviewable[path] ? "file" : attachmentKind(path)}
+          <div class="attachment {kind}" title={path}>
+            {#if kind === "image"}
+              <img src={attachmentURL(path)} alt={fileName(path)} draggable="false" onerror={() => (unpreviewable[path] = true)} />
+            {:else if kind === "video"}
+              <!-- #t: the first frame shows, not a blank box. -->
+              <video src="{attachmentURL(path)}#t=0.1" preload="metadata" muted playsinline aria-label={fileName(path)} onerror={() => (unpreviewable[path] = true)}></video>
+              <span class="play" aria-hidden="true"><Icon name="play" size={14} /></span>
+            {:else}
+              <Icon name="file" size={20} />
+              <span class="name">{fileName(path)}</span>
+            {/if}
             <button
-              class="icon-button tiny"
+              class="remove"
               title="Remove attachment"
               aria-label="Remove {fileName(path)}"
               onclick={() => (app.attachments = app.attachments.filter((p) => p !== path))}>
-              <Icon name="close" size={14} />
+              <Icon name="close" size={12} />
             </button>
           </div>
         {/each}
@@ -212,19 +225,69 @@
     margin: 0 0 6px 50px;
   }
   .attachment {
+    position: relative;
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    height: 72px;
     min-width: 0;
     max-width: 100%;
-    padding: 6px 10px;
     border-radius: 12px;
     background: var(--composer);
+    overflow: hidden;
+  }
+  .attachment.image,
+  .attachment.video {
+    width: 72px;
+  }
+  .attachment.file {
+    width: 180px;
+    padding: 0 30px 0 12px;
+    color: var(--subtle);
+  }
+  .attachment img,
+  .attachment video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
   }
   .attachment .name {
+    color: var(--text);
+    font-size: 13px;
     overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow-wrap: anywhere;
+  }
+  /* Over the picture, so a dark scrim: readable on any photo, any theme. */
+  .play,
+  .remove {
+    position: absolute;
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.55);
+    color: #fff;
+  }
+  .play {
+    left: 50%;
+    top: 50%;
+    width: 28px;
+    height: 28px;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .remove {
+    top: 4px;
+    right: 4px;
+    width: 20px;
+    height: 20px;
+  }
+  .remove:hover {
+    background: rgba(0, 0, 0, 0.75);
   }
   .tiny {
     width: 22px;

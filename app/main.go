@@ -114,10 +114,19 @@ func main() {
 func blurSupported() bool { return runtime.GOOS == "darwin" || runtime.GOOS == "windows" }
 
 // mediaMiddleware serves downloaded photos, files, and contact photos from
-// our media folder at /media/<file>; nothing outside it.
+// our media folder at /media/<file>, and the files the user attached at
+// /attachment?path=<path> for their previews; nothing else.
 func mediaMiddleware(m *Messages) application.Middleware {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/attachment" {
+				if p := r.URL.Query().Get("path"); m.previewable(p) {
+					http.ServeFile(w, r, p)
+				} else {
+					http.NotFound(w, r)
+				}
+				return
+			}
 			if name, ok := strings.CutPrefix(r.URL.Path, "/media/"); ok && name != "" && !strings.Contains(name, "/") {
 				http.ServeFile(w, r, filepath.Join(m.dir, "media", filepath.Base(name)))
 				return

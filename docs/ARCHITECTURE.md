@@ -108,6 +108,8 @@ The folder and files are readable by the owner only.
   pictures and icons go in `media/` as `lp-*` files.
 - `media/`: downloaded photos, files, and contact photos. The UI loads them
   through `/media/<file>`, which serves nothing outside this folder.
+  Files picked or dropped to send preview through `/attachment?path=`,
+  which serves only those.
 - `demo/`: the same layout for `--demo`.
 
 Builds named "GoMessages Next" used `GoMessagesNext/`. It's moved to

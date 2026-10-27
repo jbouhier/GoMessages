@@ -43,6 +43,11 @@ type Messages struct {
 	settingsMu sync.Mutex
 	// httpEvents carries events in --serve mode, where there is no Wails app.
 	httpEvents *eventHub
+
+	// attached are the files the user picked or dropped: the only files
+	// outside the media folder the UI may load, for their previews.
+	attachedMu sync.Mutex
+	attached   map[string]bool
 }
 
 func newMessages(demo bool) (*Messages, error) {
@@ -245,13 +250,38 @@ func (m *Messages) finishSignIn(window *application.WebviewWindow) {
 
 // PickFile asks for an attachment; "" when cancelled.
 func (m *Messages) PickFile() (string, error) {
-	return m.app.Dialog.OpenFile().SetTitle("Attach a file").PromptForSingleSelection()
+	path, err := m.app.Dialog.OpenFile().SetTitle("Attach a file").PromptForSingleSelection()
+	if path != "" {
+		m.allowPreview(path)
+	}
+	return path, err
+}
+
+// allowPreview lets the UI load these files at /attachment, to preview them
+// before they're sent.
+func (m *Messages) allowPreview(paths ...string) {
+	m.attachedMu.Lock()
+	defer m.attachedMu.Unlock()
+	if m.attached == nil {
+		m.attached = map[string]bool{}
+	}
+	for _, p := range paths {
+		m.attached[p] = true
+	}
+}
+
+// previewable: the user attached this file. Nothing else on disk is served.
+func (m *Messages) previewable(path string) bool {
+	m.attachedMu.Lock()
+	defer m.attachedMu.Unlock()
+	return m.attached[path]
 }
 
 // filesDropped hands files dragged onto the window to the UI, which attaches
 // them to the open conversation.
 func (m *Messages) filesDropped(paths []string) {
 	files := droppableFiles(paths)
+	m.allowPreview(files...)
 	switch {
 	case len(files) == 0:
 	case m.httpEvents != nil:

@@ -5,6 +5,9 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
+	"net/http"
+	"net/http/httptest"
+	"net/url"
 	"os"
 	"path/filepath"
 	"slices"
@@ -98,5 +101,33 @@ func TestMenuShortcutsGoThroughItem(t *testing.T) {
 	})
 	if calls != 1 {
 		t.Fatalf("SetAccelerator called in %d places in main.go; use item() so Windows and Linux get the shortcut", calls)
+	}
+}
+
+// /attachment serves the files the user attached, for their previews, and
+// nothing else on disk.
+func TestAttachmentPreviewServesOnlyAttachedFiles(t *testing.T) {
+	dir := t.TempDir()
+	attached, other := filepath.Join(dir, "cat.jpg"), filepath.Join(dir, "secret.txt")
+	for _, p := range []string{attached, other} {
+		if err := os.WriteFile(p, []byte(filepath.Base(p)), 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	m := &Messages{dir: dir}
+	m.filesDropped([]string{attached})
+	handler := mediaMiddleware(m)(http.NotFoundHandler())
+	get := func(path string) *httptest.ResponseRecorder {
+		w := httptest.NewRecorder()
+		handler.ServeHTTP(w, httptest.NewRequest("GET", "/attachment?path="+url.QueryEscape(path), nil))
+		return w
+	}
+	if w := get(attached); w.Code != 200 || w.Body.String() != "cat.jpg" {
+		t.Fatalf("attached file: %d %q", w.Code, w.Body.String())
+	}
+	for _, p := range []string{other, dir, "", attached + "/../secret.txt"} {
+		if w := get(p); w.Code != 404 {
+			t.Fatalf("%q: %d, want 404", p, w.Code)
+		}
 	}
 }

@@ -4,7 +4,7 @@
 import { after, before, beforeEach, test } from "node:test";
 import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { copyFileSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { chromium } from "playwright-core";
@@ -676,7 +676,8 @@ function recordSends() {
 }
 
 const drop = (paths) => state((p) => fetch("/rpc/DropFiles", { method: "POST", body: JSON.stringify([p]) }), paths);
-const chips = () => page.locator(".composer .attachment .name").allTextContents();
+/** The files in the message box, by name. */
+const chips = () => page.locator(".composer .attachment").evaluateAll((es) => es.map((e) => e.title.split(/[\\/]/).pop()));
 
 test("dropped files wait in the message box, then go out one message each", async () => {
   const sends = recordSends();
@@ -691,7 +692,7 @@ test("dropped files wait in the message box, then go out one message each", asyn
   // Through Go, as a real drop: the folder and the repeat are left out.
   await drop([a, folder, b, a]);
   await until("two files in the box", () => window.gm.attachments.length === 2);
-  assert.deepEqual(await chips(), ["📎 kyoto.jpg", "📎 notes.txt"]);
+  assert.deepEqual(await chips(), ["kyoto.jpg", "notes.txt"]);
   await drop([b]);
   await page.waitForTimeout(300);
   assert.equal((await chips()).length, 2, "a file already there isn't added twice");
@@ -715,9 +716,9 @@ test("dropped files wait in the message box, then go out one message each", asyn
 test("a dropped file can be taken back out before sending", async () => {
   await open("JB Bouhier", "1");
   await state(() => window.gm.attachFiles(["/x/one.jpg", "C:\\x\\two.pdf"]));
-  assert.deepEqual(await chips(), ["📎 one.jpg", "📎 two.pdf"]);
+  assert.deepEqual(await chips(), ["one.jpg", "two.pdf"]);
   await page.getByRole("button", { name: "Remove one.jpg" }).click();
-  assert.deepEqual(await chips(), ["📎 two.pdf"]);
+  assert.deepEqual(await chips(), ["two.pdf"]);
   assert.deepEqual(await state(() => window.gm.attachments), ["C:\\x\\two.pdf"]);
 });
 
@@ -760,4 +761,37 @@ test("a drop with nowhere to go says why", async () => {
   await state(() => window.gm.attachFiles(["/x/one.jpg"]));
   assert.match(await page.getByRole("status").textContent(), /can't reply/);
   assert.equal(await state(() => window.gm.attachments.length), 0);
+});
+
+test("dropped pictures and videos show a preview, other files their name", async () => {
+  const fixtures = new URL("./fixtures/", import.meta.url).pathname;
+  const photo = join(home, "kevin.png");
+  const video = join(home, "clip.webm");
+  const doc = join(home, "boarding pass.pdf");
+  const broken = join(home, "not really.jpg");
+  copyFileSync(new URL("../../build/appicon.png", import.meta.url).pathname, photo);
+  copyFileSync(join(fixtures, "clip.webm"), video);
+  writeFileSync(doc, "%PDF");
+  writeFileSync(broken, "not a picture");
+  await open("JB Bouhier", "1");
+  await drop([photo, video, doc, broken]);
+  await until("four files in the box", () => window.gm.attachments.length === 4);
+
+  const img = page.locator(".composer .attachment.image img");
+  await until("the picture to load", () => document.querySelector(".composer .attachment.image img")?.naturalWidth > 0);
+  assert.equal(await img.count(), 1, "the picture shows as a picture");
+  await until("the video's first frame", () => document.querySelector(".composer .attachment.video video")?.videoWidth > 0);
+  assert.ok(await page.locator(".composer .attachment.video .play").isVisible(), "a video is marked as one");
+  // The PDF, and the .jpg that isn't a picture, show their names.
+  await until("the broken picture to fall back to its name", () => document.querySelectorAll(".composer .attachment.file").length === 2);
+  assert.deepEqual(await page.locator(".composer .attachment.file .name").allTextContents(), ["boarding pass.pdf", "not really.jpg"]);
+  // Every preview has its own way out.
+  assert.equal(await page.locator(".composer .attachment .remove").count(), 4);
+});
+
+test("only attached files can be previewed", async () => {
+  const secret = join(home, "secret.txt");
+  writeFileSync(secret, "secret");
+  const status = await state((p) => fetch(`/attachment?path=${encodeURIComponent(p)}`).then((r) => r.status), secret);
+  assert.equal(status, 404);
 });

@@ -26,6 +26,7 @@ func (m *Messages) serve(addr string) error {
 	mux := http.NewServeMux()
 	mux.Handle("/", http.FileServerFS(dist))
 	mux.Handle("/media/", mediaMiddleware(m)(http.NotFoundHandler()))
+	mux.Handle("/attachment", mediaMiddleware(m)(http.NotFoundHandler()))
 	mux.HandleFunc("/events", hub.serve)
 	// The Wails runtime looks for this; there is none outside the app.
 	mux.HandleFunc("/wails/custom.js", func(w http.ResponseWriter, _ *http.Request) {

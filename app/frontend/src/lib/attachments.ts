@@ -19,3 +19,21 @@ export function addAttachments(files: string[], paths: string[]): { files: strin
   }
   return { files: out, dropped };
 }
+
+const IMAGE = new Set(["jpg", "jpeg", "png", "gif", "webp", "bmp", "heic", "heif", "avif"]);
+const VIDEO = new Set(["mp4", "m4v", "mov", "webm", "3gp"]);
+
+/** How a file previews in the message box: a picture, a video's first
+ *  frame, or its name. By extension: the file isn't read for it. */
+export function attachmentKind(path: string): "image" | "video" | "file" {
+  const name = fileName(path);
+  if (!name.includes(".")) return "file";
+  const ext = name.split(".").pop()!.toLowerCase();
+  return IMAGE.has(ext) ? "image" : VIDEO.has(ext) ? "video" : "file";
+}
+
+/** Where the UI loads an attached file to preview it. Go serves only files
+ *  the user picked or dropped. */
+export function attachmentURL(path: string): string {
+  return `/attachment?path=${encodeURIComponent(path)}`;
+}
