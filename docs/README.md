@@ -7,7 +7,7 @@ by [Wails v3](https://v3.wails.io). Details in [ARCHITECTURE](ARCHITECTURE.md).
 
 ## Requirements
 
-- Go 1.26+, Node.js 22+, and [just](https://just.systems)
+- Go 1.27.3+, Node.js 22+, and [just](https://just.systems)
 - macOS: `xcode-select --install`
 - Linux: `build-essential pkg-config libgtk-4-dev libwebkitgtk-6.0-dev`
 - Windows: nothing extra. WebView2 ships with Windows 10 and 11.

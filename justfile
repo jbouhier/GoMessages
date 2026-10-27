@@ -72,8 +72,9 @@ lint: ui
 tools:
     #!/usr/bin/env bash
     set -euo pipefail
-    [[ -x {{wails}} ]] && exit 0
     version="$(awk '$1 == "github.com/wailsapp/wails/v3" { print $2; exit }' go.mod)"
+    # Reinstalled when go.mod moves to another Wails. It prints to stderr.
+    [[ -x {{wails}} && "$({{wails}} version 2>&1 | tr -d "[:space:]")" == "$version" ]] && exit 0
     GOBIN="$PWD/bin/tools" go install "github.com/wailsapp/wails/v3/cmd/wails3@$version"
 
 # Product images for the website (site/public/product), from the demo

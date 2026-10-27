@@ -1,11 +1,11 @@
 module gomessages
 
-go 1.26.0
+go 1.27.3
 
 require (
 	github.com/google/uuid v1.6.0
 	github.com/rs/zerolog v1.35.1
-	github.com/wailsapp/wails/v3 v3.0.0-beta.29
+	github.com/wailsapp/wails/v3 v3.0.0
 	go.mau.fi/mautrix-gmessages v0.2609.0
 	go.mau.fi/util v0.10.1
 	golang.org/x/sys v0.48.0
