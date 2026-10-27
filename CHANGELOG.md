@@ -3,13 +3,15 @@
 What changed in each GoMessages release. The section for a version is also
 its release notes on GitHub.
 
-## [Unreleased]
+## [0.8.0] - 2026-10-26
 
 ### Added
 
 - Drag files from your desktop onto a conversation to attach them. They
   wait in the message box with whatever you type; each goes out as its own
   message when you send. Up to 10 at a time.
+- Photos and videos waiting in the message box show a preview, other files
+  their name.
 - On Windows and Linux, `Ctrl+Q` quits and `F11` goes full screen.
 
 ### Changed
@@ -24,6 +26,8 @@ its release notes on GitHub.
 ### Fixed
 
 - `Ctrl` shortcuts work on Windows. The window had no menu to catch them.
+- Signing in again after Google signs you out no longer replays old
+  messages.
 
 ## [0.7.0] - 2026-10-22
 
